@@ -54,7 +54,7 @@
         <button on:click={onRemove}>X</button>
     </div>
     <img src={annotation.perscanvas.toDataURL()} alt={annotation.text} class="annotationPerspective"/>
-    <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/>
+    <!-- <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/> -->
   {#if editing}
     <!-- markup for editing annotation: label, input text, Cancel and Save Button -->
     <form on:submit|preventDefault={onSave} class="stack-small" on:keydown={e => e.key === 'Escape' && onCancel()}>
@@ -75,9 +75,17 @@
     <!-- markup for displaying annotation: checkbox, label, Edit and Delete Button -->
 
         <!-- add an input form that lets the user edit the text -->
-        <p>{annotation.text}</p>
+        <!-- if the annotation text is null -->
+        {#if annotation.text == ""}
+            <!-- display a message that says "no text" -->
+            <p class="hint">Annotation label</p>
+        {:else}
+            <!-- display the annotation text -->
+            <p>{annotation.text}</p>
+        {/if}
+        
         <button type="button" class="btn" on:click={onEdit}>
-            Edit
+            edit
         </button>
         <button type="button" class="btn" on:click={upLoad}>
           upload
@@ -101,7 +109,7 @@
     }
     .annotation{
         /* make this look like a card */
-        border: 1px solid black;
+        border: 1px solid rgba(0,0,0,0.75);
         
         background-color: white;
         padding: 5px;
@@ -124,6 +132,9 @@
       font-size: 0.5em;
       /*  make the text grey */
       color: grey;
+    }
+    .hint{
+        color: grey;
     }
 </style>
   

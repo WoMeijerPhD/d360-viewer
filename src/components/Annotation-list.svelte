@@ -34,7 +34,7 @@
   
   <!-- Annotations.svelte -->
   <div class="todoapp stack-large">
-  
+  <h3>Annotations:</h3>
   
     <!-- Annotations -->
     <ul class="annotations" aria-labelledby="list-heading">
@@ -51,13 +51,15 @@
     {/each}
     </ul>
   
-    <hr />
-  
-  
   </div>
 <style>
   /* make the annotation class list items not have a bullet point */
   .annotations{
     list-style-type: none;
+  }
+  ul {
+
+    margin:0;
+    padding:10px;
   }
 </style>

@@ -2,6 +2,8 @@
 	import 'aframe';
 	import AnnotationList from '../components/Annotation-list.svelte';
     import axios from 'axios';
+	import MiroInfo from '../components/Miro-Info.svelte';
+
 	// import Annotation from './components/annotation.svelte';
     // import { AFRAME } from 'aframe';
     // import { AFRAME } from 'aframe';
@@ -87,7 +89,10 @@
 			moveCamera(headPosition);
 		}
 	}
+
+
 	function handleLoaded(){
+		// runs when the video is loaded
 		console.log("loaded");
 		updateVideoTime();
 		updateURLparams();
@@ -137,6 +142,13 @@
 	   completeUpload(annotation);
    }
 
+   // begin user code
+   $: userid = 0;
+
+   function updateUserID(newID){
+	   userid = newID;
+   }
+
 
 	// begin upload code
 	async function testUpload() {
@@ -178,8 +190,8 @@
 		// file_url= "http://vr-done-server.io.tudelft.nl/files/test/image.jpg"
 		let json_payload = {
 			"fileUrl": file_url,
-			"posX": annotation.time*20,
-			"posY": 0,
+			"posX": annotation.time*40,
+			"posY": userid*600,
 			"text": annotation.text + " " + annotation.time,
 		}
 		const response = await axios.post(`${serverURL}/uploadMiro/`,
@@ -235,7 +247,9 @@
 
     </div>
     <div class="annotations">
-
+		<MiroInfo {userid}
+		on:update={(e)=> updateUserID(e.detail)}
+		/>
 		<AnnotationList annotations={annotations} 
 			on:remove={(e) => removeAnnotation(e.detail)} 
 			on:update={(e)=> updateAnnotation(e.detail)} 
