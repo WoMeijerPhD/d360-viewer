@@ -1,6 +1,7 @@
 <script>
 	import 'aframe';
 	import AnnotationList from './components/Annotation-list.svelte';
+	import axios from 'axios';
 	// import Annotation from './components/annotation.svelte';
     // import { AFRAME } from 'aframe';
     // import { AFRAME } from 'aframe';
@@ -12,6 +13,11 @@
 	$: time = 0;
 	$: duration =0;
 	$: vidPaused = true;
+	// set the session id to the current time
+	const serverURL="http://vr-done-server.io.tudelft.nl";
+	let sessionID = "test";
+	// const serverURL="http://localhost:5000";
+	// const sessionID = "";
 	AFRAME.registerComponent('rotation-reader', {
 		init: function () {
 		},
@@ -82,8 +88,65 @@
     function updateAnnotation(annotation) {
     const i = annotations.findIndex((a) => a.id === annotation.id);
     annotations[i] = { ...annotations[i], ...annotation };
-  }
-  
+   }
+   function uploadAnnotation(annotation){
+	   completeUpload(annotation);
+   }
+
+
+
+   async function testUpload() {
+	makeAnnotation();
+	completeUpload(annotations[0]);
+}
+	async function completeUpload(annotation)
+	{
+		let uploadData = await uploadAnnotationImage(annotation);
+		console.log(uploadData);
+		let fileUrl = uploadData['file_url'];
+		let res = await uploadMiro(annotation, fileUrl);
+		console.log(res);
+	}
+	async function uploadAnnotationImage (annotation) {
+
+		const imageURL = annotation.perscanvas.toDataURL('image/png');
+		// Convert image data URL to binary data
+		const imageBlob = await fetch(imageURL).then(response => response.blob());
+		let formData = new FormData();
+		formData.append('file', imageBlob, `${annotation.id}.png`);
+		// Upload image to server using Axios
+		const response = await axios.post(`${serverURL}/upload/${sessionID}`, 
+		formData
+		,    {headers: {
+		'Content-Type': 'multipart/form-data'
+		}});
+
+		// Handle response
+		if (response.ok) {
+		console.log('Image uploaded successfully');
+		} else {
+		console.error('Error uploading image:', response.statusText);
+		}
+		return response.data;
+	
+	}
+	async function uploadMiro(annotation, file_url){
+		// file_url= "http://vr-done-server.io.tudelft.nl/files/test/image.jpg"
+		let json_payload = {
+			"fileUrl": file_url,
+			"posX": annotation.time*20,
+			"posY": 0,
+			"text": annotation.text + " " + annotation.time,
+		}
+		const response = await axios.post(`${serverURL}/uploadMiro/`,
+		json_payload
+		,    {headers: {
+		'Content-Type': 'application/json'
+		}});
+		return response.data;
+	}
+
+   
 
 </script>
 
@@ -119,14 +182,19 @@
             <!-- <div id="selector-text"> {headPositionText}</div> -->
 
 			<button class = "control-button" on:click={()=>{ makeAnnotation()}}>+</button>
-			<!-- <button on:click={()=>{ logAnnotations()}}>log annotation</button> -->
+			<!-- <button on:click={()=>{ testUpload()}}>log annotation</button> -->
+
+
 
         </div>
 
     </div>
     <div class="annotations">
-		<AnnotationList annotations={annotations} on:remove={(e) => removeAnnotation(e.detail)} 
-			on:update={(e)=> updateAnnotation(e.detail) }/>
+		<AnnotationList annotations={annotations} 
+			on:remove={(e) => removeAnnotation(e.detail)} 
+			on:update={(e)=> updateAnnotation(e.detail)} 
+			on:upload={(e)=> uploadAnnotation(e.detail)}
+			/>
 	  <!-- <AnnotationList annotations={annotations}/> -->
     </div>
         

@@ -22,6 +22,10 @@
       update({ text: text })                // updates annotation text
       editing = false                       // and exit editing mode
     }
+
+    function upLoad(){
+        dispatch('upload', annotation)
+    }
   
     function onRemove() {
       dispatch('remove', annotation)              // emit remove event
@@ -43,7 +47,9 @@
     <div class="topbar">
         <div>
             Time: {annotation.time.toFixed(2)}
-            head pos: {annotation.orientation.yaw.toFixed(2)},{annotation.orientation.pitch.toFixed(2)}
+            <span class="head-orient">
+              head pos: {annotation.orientation.yaw.toFixed(2)},{annotation.orientation.pitch.toFixed(2)}
+            </span>
         </div>
         <button on:click={onRemove}>X</button>
     </div>
@@ -73,6 +79,9 @@
         <button type="button" class="btn" on:click={onEdit}>
             Edit
         </button>
+        <button type="button" class="btn" on:click={upLoad}>
+          upload
+      </button>
         <!-- add a button that moves the aframe camera to the orientation -->
         <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
         <!-- add a button that deletes the annotation -->
@@ -109,6 +118,12 @@
     }
     .annotation-text{
         width: 100%;
+    }
+    .head-orient{
+      /*  make the text small */
+      font-size: 0.5em;
+      /*  make the text grey */
+      color: grey;
     }
 </style>
   

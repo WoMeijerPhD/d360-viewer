@@ -19,6 +19,9 @@
     function updateAnnotation(annotation) {
       dispatch('update', annotation)
   }
+  function uploadAnnotation(annotation){
+    dispatch('upload', annotation)
+  }
   
   
     function addAnnotation() {
@@ -37,8 +40,11 @@
     <ul class="annotations" aria-labelledby="list-heading">
     {#each annotations as annotation (annotation.id)}
       <li class="annotation">
-        <Annotation {annotation} on:remove={(e) => removeAnnotation(e.detail)} 
-          on:update={(e)=> updateAnnotation(e.detail) }/>
+        <Annotation {annotation} 
+        on:remove={(e) => removeAnnotation(e.detail)} 
+        on:update={(e)=> updateAnnotation(e.detail) }
+        on:upload={(e)=> uploadAnnotation(e.detail)}  
+          />
         </li>
     {:else}
       <li>Press "+" to create a new note!</li>
