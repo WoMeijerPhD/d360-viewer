@@ -7,9 +7,9 @@
     // import { AFRAME } from 'aframe';
 	$: headPositionText = "head position";
 	$: headPosition = [];
+	$: time =  0;
 
-	$: time = 0;
-	$: slime = 0;
+
 	$: annotations =[];
 
 
@@ -59,10 +59,41 @@
 
     // TODO: make this less janky
     // after 1 second, update the duration of the video
-     setTimeout(function(){ duration = document.querySelector('#bike_ride').duration; }, 1000);
+     setTimeout(function(){ duration = document.querySelector('#bike_ride').duration; }, 800);
 	
-    
-     $: screenshotID = 0;
+	//TODO: make this less janky
+	// set the time based on url parameters, if they exist
+	const urlParams = new URLSearchParams(window.location.search);
+	// check 1 second after the video has started playing if the time is set in the url
+	// if it is, set the time of the video to that time
+	setTimeout(function(){ 
+		if (urlParams.has('time')){
+			//  check that time is a float
+			if (isNaN(parseFloat(urlParams.get('time')))){
+				time = 0;
+			}
+			else{
+				time = parseFloat(urlParams.get('time'));
+			}
+		}
+		//  check if roll and yaw are set in the url
+		if (urlParams.has('roll') && urlParams.has('yaw')){
+			//  check that roll and yaw are floats
+			if (isNaN(parseFloat(urlParams.get('roll'))) || isNaN(parseFloat(urlParams.get('yaw')))){
+				headPosition.yaw = 0;
+				headPosition.pitch = 0;
+			}
+			else{
+				headPosition.yaw = parseFloat(urlParams.get('yaw'));
+				headPosition.pitch = parseFloat(urlParams.get('roll'));
+			}
+			//  move the camera to the specified position
+			moveCamera(headPosition);
+		}
+	}, 1000);
+
+	// $: time = 0;
+    $: screenshotID = 0;
 
 	function calcScreenshotID() {
 		screenshotID = annotations.length+1;
@@ -199,7 +230,7 @@
 
     </div>
     <div class="annotations">
-		test: {slime}
+
 		<AnnotationList annotations={annotations} 
 			on:remove={(e) => removeAnnotation(e.detail)} 
 			on:update={(e)=> updateAnnotation(e.detail)} 
