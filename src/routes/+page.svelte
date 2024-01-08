@@ -57,16 +57,12 @@
 	}
 	});
 
-    // TODO: make this less janky
-    // after 1 second, update the duration of the video
-     setTimeout(function(){ duration = document.querySelector('#bike_ride').duration; }, 800);
-	
-	//TODO: make this less janky
-	// set the time based on url parameters, if they exist
-	const urlParams = new URLSearchParams(window.location.search);
-	// check 1 second after the video has started playing if the time is set in the url
-	// if it is, set the time of the video to that time
-	setTimeout(function(){ 
+	function updateVideoTime(){
+		duration = document.querySelector('#bike_ride').duration;
+	}
+
+	function updateURLparams(){
+		const urlParams = new URLSearchParams(window.location.search);
 		if (urlParams.has('time')){
 			//  check that time is a float
 			if (isNaN(parseFloat(urlParams.get('time')))){
@@ -90,7 +86,15 @@
 			//  move the camera to the specified position
 			moveCamera(headPosition);
 		}
-	}, 1000);
+	}
+	function handleLoaded(){
+		console.log("loaded");
+		updateVideoTime();
+		updateURLparams();
+	}
+
+	
+	
 
 	// $: time = 0;
     $: screenshotID = 0;
@@ -197,7 +201,8 @@
             <a-scene embedded screenshot="width: 1024; height: 512;" >
                 <a-assets>
                     <!-- svelte-ignore a11y-media-has-caption -->
-                    <video id="bike_ride"  loop="true" src="../bike_ride.mp4" bind:currentTime={time} bind:paused={vidPaused}> </video>
+                    <video id="bike_ride"  loop="true" src="../bike_ride.mp4" bind:currentTime={time} bind:paused={vidPaused} 
+					on:loadeddata={handleLoaded}> </video>
                 </a-assets>
                 <a-entity camera look-controls rotation-reader timer>
                     <!-- <a-video src="#bike_ride" width="16" height="9" position="5 5 -20"></a-video> -->
