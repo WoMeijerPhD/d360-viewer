@@ -97,3 +97,9 @@ export async function miroUploadAnnotation(annotation, userid){
     return annotation;
 
 }
+
+export async function newUserLabel(userid, text = userid){
+    let offset = calcXY(-10, userid);
+    let res = await uploadTextMiro(text, offset);
+    return (res);
+}
