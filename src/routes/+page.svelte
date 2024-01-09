@@ -4,11 +4,10 @@
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
 	import {supabase} from "../components/Supabase-Client";
-	import {test, uploadTextMiro, uploadImageMiro, calcXY, miroUploadAnnotation} from "../components/miro-upload";
+	import {miroUploadAnnotation, newUserLabel} from "../components/miro-upload";
+	import { storedUID } from '../components/storable.js'
+	import {addViewer} from "../components/Supabase-functions";
 
-	// import Annotation from './components/annotation.svelte';
-    // import { AFRAME } from 'aframe';
-    // import { AFRAME } from 'aframe';
 	$: headPositionText = "head position";
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
@@ -19,11 +18,7 @@
 
 	$: duration =0;
 	$: vidPaused = true;
-	// set the session id to the current time
-	const serverURL="http://vr-done-server.io.tudelft.nl";
-	let sessionID = "test";
-	// const serverURL="http://localhost:5000";
-	// const sessionID = "";
+
 	// check if Aframe has a rotation-reader component
 	if (AFRAME.components['rotation-reader'] === undefined){
 		//  if it doesn't, register it
@@ -98,6 +93,7 @@
 		updateVideoTime();
 		updateURLparams();
 	}
+	
 
 	
 	
@@ -119,6 +115,9 @@
 		let overallcanvas = document.querySelector('a-scene').components.screenshot.getCanvas('equarectangular');
 		overallcanvas = cloneCanvas(overallcanvas)
 		annotations = [ {text:"",time: time,orientation: {...headPosition}, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID}, ...annotations];
+
+		console.log("uploading annotation", annotations[0].id);
+		uploadAnnotation(annotations[0]);
 	}
 
 
@@ -138,8 +137,15 @@
     function updateAnnotation(annotation) {
     const i = annotations.findIndex((a) => a.id === annotation.id);
     annotations[i] = { ...annotations[i], ...annotation };
-   }
+    }
+	function updateAnnotationText(annotation){
+		// uploading the annotation also updates it, so just upload it
+		uploadAnnotation(annotation);
+	}
+
    async function  uploadAnnotation(annotation){
+	annotation.uploaded = false;
+	updateAnnotation(annotation);
 	// check if the image url is null
 	   if (annotation.imgurl == null){
 		   // if it is, upload the image to supabase
@@ -147,7 +153,8 @@
 		   updateAnnotation(annotation);
 	   }
 	// then upload / update the annotation to miro
-		annotation = await miroUploadAnnotation(annotation, userid);
+		annotation = await miroUploadAnnotation(annotation, $storedUID);
+		annotation.uploaded = true;
 		updateAnnotation(annotation);
    }
 
@@ -157,7 +164,7 @@
 		const imageBlob = await fetch(imageURL).then(response => response.blob());
 
 
-		const fileName = `public/${userid}/${annotation.id}.png`;
+		const fileName = `public/${$storedUID}/${annotation.id}.png`;
 
 		const { data, error } = await supabase
 		.storage
@@ -190,66 +197,22 @@
 
 
    // begin user code
-   $: userid = 0;
+//    $: userid = 0;
 
-   function updateUserID(newID){
-	   userid = newID;
+   async function setupUserID(){
+	if ($storedUID == null){
+		// get a new userID from supabase
+		$storedUID = await addViewer();
+		let res = await newUserLabel($storedUID, `user number ${$storedUID}`);
+	}
    }
+	function updateUserID(newID){
+	$storedUID = newID;
+   }
+   // check the user id on page load
+   setupUserID();
 
 
-	// begin upload code
-	async function testUpload() {
-		makeAnnotation();
-		completeUpload(annotations[0]);
-	}
-
-
-	async function completeUpload(annotation)
-	{
-		let uploadData = await uploadAnnotationImage(annotation);
-		console.log(uploadData);
-		let fileUrl = uploadData['file_url'];
-		let res = await uploadMiro(annotation, fileUrl);
-		console.log(res);
-	}
-	async function uploadAnnotationImage (annotation) {
-
-		const imageURL = annotation.perscanvas.toDataURL('image/png');
-		// Convert image data URL to binary data
-		const imageBlob = await fetch(imageURL).then(response => response.blob());
-		let formData = new FormData();
-		formData.append('file', imageBlob, `${annotation.id}.png`);
-		// Upload image to server using Axios
-		const response = await axios.post(`${serverURL}/upload/${sessionID}`, 
-		formData
-		,    {headers: {
-		'Content-Type': 'multipart/form-data'
-		}});
-
-		// Handle response
-		if (response.ok) {
-		console.log('Image uploaded successfully');
-		} else {
-		console.error('Error uploading image:', response.statusText);
-		}
-		return response.data;
-	
-	}
-	async function uploadMiro(annotation, file_url){
-		// file_url= "http://vr-done-server.io.tudelft.nl/files/test/image.jpg"
-		let json_payload = {
-			"fileUrl": file_url,
-			"posX": annotation.time*40,
-			"posY": userid*600,
-			"text": annotation.text + " " + annotation.time,
-		}
-		const response = await axios.post(`${serverURL}/uploadMiro/`,
-		json_payload
-		,    {headers: {
-		'Content-Type': 'application/json'
-		}});
-		return response.data;
-	}
 
 
 
@@ -296,12 +259,12 @@
 
     </div>
     <div class="annotations">
-		<MiroInfo {userid}
+		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}
 		/>
 		<AnnotationList annotations={annotations} 
 			on:remove={(e) => removeAnnotation(e.detail)} 
-			on:update={(e)=> updateAnnotation(e.detail)} 
+			on:update={(e)=> updateAnnotationText(e.detail)} 
 			on:upload={(e)=> uploadAnnotation(e.detail)}
 			/>
 	  <!-- <AnnotationList annotations={annotations}/> -->

@@ -13,9 +13,8 @@
 <div class="miro-options">
     <a href="https://miro.com/app/board/uXjVMR8QuxI=/" target="_blank">View board</a>
     <div>
-        <button  on:click={updateID(userid-1)}>-</button>
         user ID: {userid}
-        <button  on:click={updateID(userid+1)}>+</button>
+        <!-- <button  on:click={updateID()}>+</button> -->
     </div>
 </div>
 <hr />

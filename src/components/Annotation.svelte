@@ -8,7 +8,7 @@
     let editing = false                     // track editing mode
     let text = annotation.text                    // hold the text of the annotation being edited
     let info = false
-  
+    let uploaded = false
     function update(updatedTodo) {
       annotation = { ...annotation, ...updatedTodo }    // applies modifications to annotation
       dispatch('update', annotation)              // emit update event
@@ -25,6 +25,7 @@
     }
 
     function upLoad(){
+      annotation.uploaded = false
         dispatch('upload', annotation)
     }
   
@@ -47,7 +48,10 @@
   
   </script>
   
-<div class="annotation">
+<!-- <div class="annotation"> -->
+  <!-- if uploading -->
+  <div class="annotation {annotation.uploaded? 'annotation-uploaded':'annotation-uploading'}">
+
     <div class="topbar">
         <div>
             Time: {annotation.time.toFixed(2)}
@@ -56,6 +60,9 @@
             </span>
         </div>
         <div>
+          <!-- checkmark character -->
+
+          {annotation.uploaded? '\u2713':'\u27F3'}
           <button on:click={onInfo}>i</button>
           <button on:click={onRemove}>X</button>
         </div>
@@ -94,21 +101,21 @@
         <button type="button" class="btn" on:click={onEdit}>
             edit
         </button>
-        <button type="button" class="btn" on:click={upLoad}>
-          upload
-      </button>
-      <!-- add a button that moves the aframe camera to the orientation -->
-      <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
-      <!-- add a button that deletes the annotation -->
-
-
-  {/if}
-  {#if info}
-    <div class="annotation-info">
+        <!-- add a button that moves the aframe camera to the orientation -->
+        <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
+        <!-- add a button that deletes the annotation -->
+        
+        {/if}
+        {#if info}
+        <div class="annotation-info">
+          <button type="button" class="btn" on:click={upLoad}>
+            force upload
+        </button>
       <p>id: {annotation.id}</p>
       <p>time: {annotation.time}</p>
       <p>text: {annotation.text}</p>
       <p>orientation: {annotation.orientation.yaw},{annotation.orientation.pitch}</p>
+      <p>uploaded: {annotation.uploaded}</p>
       <p>image URL:</p>
       <!-- if the imgurl is null -->
       {#if annotation.imgurl == ""}
@@ -139,14 +146,21 @@
     .annotation{
         /* make this look like a card */
         border: 1px solid rgba(0,0,0,0.75);
-        
-        background-color: white;
         padding: 5px;
         margin-bottom: 20px;
+        background-color: white;
         /* round the corners */
         border-radius: 5px;
         /* add a dropshadow */
         box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+    }
+    .annotation-uploading{
+      /* make the background color very light grey */
+      /* background-color: #e0e0e0; */
+    }
+    .annotation-uploaded{
+      /* make the background color very light green */
+      /* background-color: #e0ffe0; */
     }
     .topbar{
         display: flex;
