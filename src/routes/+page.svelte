@@ -22,31 +22,30 @@
 	let sessionID = "test";
 	// const serverURL="http://localhost:5000";
 	// const sessionID = "";
-	AFRAME.registerComponent('rotation-reader', {
-		init: function () {
-		},
-		tick: function () {
-			// `this.el` is the element.
-			// `object3D` is the three.js object.
-			// `rotation` is a three.js Euler using radians. `quaternion` also available.
-			// console.log(this.el.object3D.rotation);
-			let x = this.el.object3D.rotation.x * 180 / Math.PI;
-			let y = this.el.object3D.rotation.y * 180 / Math.PI;
-			let z = this.el.object3D.rotation.z * 180 / Math.PI;
-			//  create a string that contains the x, y, and z values
-			headPositionText = `x: ${x.toFixed(2)}, y: ${y.toFixed(2)}, z: ${z.toFixed(2)}`;
-			headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
-			headPosition.pitch=this.el.components['look-controls'].pitchObject.rotation.x;
-			
-		}
-	});
-	AFRAME.registerComponent('timer', {
-		init: function () {
-			// get the time of the video
-			duration = document.querySelector('#bike_ride').duration;
-			// get the duration of the video
-		},
-	});
+	// check if Aframe has a rotation-reader component
+	if (AFRAME.components['rotation-reader'] === undefined){
+		//  if it doesn't, register it
+		AFRAME.registerComponent('rotation-reader', {
+			init: function () {
+			},
+			tick: function () {
+				// `this.el` is the element.
+				// `object3D` is the three.js object.
+				// `rotation` is a three.js Euler using radians. `quaternion` also available.
+				// console.log(this.el.object3D.rotation);
+				let x = this.el.object3D.rotation.x * 180 / Math.PI;
+				let y = this.el.object3D.rotation.y * 180 / Math.PI;
+				let z = this.el.object3D.rotation.z * 180 / Math.PI;
+				//  create a string that contains the x, y, and z values
+				headPositionText = `x: ${x.toFixed(2)}, y: ${y.toFixed(2)}, z: ${z.toFixed(2)}`;
+				headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
+				headPosition.pitch=this.el.components['look-controls'].pitchObject.rotation.x;
+				
+			}
+		});
+	}
+
+	
 	function moveCamera(aorientation) {    
         let camera =  document.querySelector('a-entity[camera]')
         camera.components["look-controls"].pitchObject.rotation.x = aorientation.pitch,
@@ -155,6 +154,8 @@
 		makeAnnotation();
 		completeUpload(annotations[0]);
 	}
+
+
 	async function completeUpload(annotation)
 	{
 		let uploadData = await uploadAnnotationImage(annotation);
