@@ -3,12 +3,14 @@
 	import AnnotationList from '../components/Annotation-list.svelte';
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
+	import {supabase} from "../components/Supabase-Client";
+	import {test, uploadTextMiro, uploadImageMiro, calcXY, miroUploadAnnotation} from "../components/miro-upload";
 
 	// import Annotation from './components/annotation.svelte';
     // import { AFRAME } from 'aframe';
     // import { AFRAME } from 'aframe';
 	$: headPositionText = "head position";
-	$: headPosition = [];
+	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
 
 
@@ -137,9 +139,55 @@
     const i = annotations.findIndex((a) => a.id === annotation.id);
     annotations[i] = { ...annotations[i], ...annotation };
    }
-   function uploadAnnotation(annotation){
-	   completeUpload(annotation);
+   async function  uploadAnnotation(annotation){
+	// check if the image url is null
+	   if (annotation.imgurl == null){
+		   // if it is, upload the image to supabase
+		   annotation.imgurl = await supaUpload(annotation);
+		   updateAnnotation(annotation);
+	   }
+	// then upload / update the annotation to miro
+		annotation = await miroUploadAnnotation(annotation, userid);
+		updateAnnotation(annotation);
    }
+
+   async function supaUpload(annotation){
+		const imageURL = annotation.perscanvas.toDataURL('image/png');
+		// Convert image data URL to binary data
+		const imageBlob = await fetch(imageURL).then(response => response.blob());
+
+
+		const fileName = `public/${userid}/${annotation.id}.png`;
+
+		const { data, error } = await supabase
+		.storage
+		.from('annotationBucket')
+		.upload(fileName, imageBlob, {
+			cacheControl: '3600',
+			upsert: true
+		});
+		// console.log("data:", data);
+		if(error){
+			console.log("error uploading to supabase", error);
+		}
+
+		// time to get the public URL
+		// TODO: make this use the supabase command, currently it doesnt work
+		// const { urldata, urlerror } = supabase
+		// .storage
+		// .from('annotationBucket')
+		// .getPublicUrl(fileName)
+		// console.log("urldata:", urldata);
+		// if(urlerror){
+		// 	console.log("error getting url from supabase", urlerror);
+		// }
+		// //... but this works!
+		// console.log("test url:",`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
+		return (`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
+   }
+
+
+
 
    // begin user code
    $: userid = 0;
@@ -203,7 +251,7 @@
 		return response.data;
 	}
 
-   
+
 
 </script>
 

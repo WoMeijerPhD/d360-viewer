@@ -4,9 +4,10 @@
     const dispatch = createEventDispatcher()
   
     export let annotation
-    console.log(annotation)
+    console.log("created new annotation", annotation)
     let editing = false                     // track editing mode
     let text = annotation.text                    // hold the text of the annotation being edited
+    let info = false
   
     function update(updatedTodo) {
       annotation = { ...annotation, ...updatedTodo }    // applies modifications to annotation
@@ -34,6 +35,9 @@
     function onEdit() {
       editing = true                        // enter editing mode
     }
+    function onInfo(){
+      info = !info
+    }
   
     function moveCamera(aorientation) {    
         let camera =  document.querySelector('a-entity[camera]')
@@ -51,7 +55,10 @@
               head pos: {annotation.orientation.yaw.toFixed(2)},{annotation.orientation.pitch.toFixed(2)}
             </span>
         </div>
-        <button on:click={onRemove}>X</button>
+        <div>
+          <button on:click={onInfo}>i</button>
+          <button on:click={onRemove}>X</button>
+        </div>
     </div>
     <img src={annotation.perscanvas.toDataURL()} alt={annotation.text} class="annotationPerspective"/>
     <!-- <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/> -->
@@ -90,11 +97,33 @@
         <button type="button" class="btn" on:click={upLoad}>
           upload
       </button>
-        <!-- add a button that moves the aframe camera to the orientation -->
-        <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
-        <!-- add a button that deletes the annotation -->
+      <!-- add a button that moves the aframe camera to the orientation -->
+      <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
+      <!-- add a button that deletes the annotation -->
+
 
   {/if}
+  {#if info}
+    <div class="annotation-info">
+      <p>id: {annotation.id}</p>
+      <p>time: {annotation.time}</p>
+      <p>text: {annotation.text}</p>
+      <p>orientation: {annotation.orientation.yaw},{annotation.orientation.pitch}</p>
+      <p>image URL:</p>
+      <!-- if the imgurl is null -->
+      {#if annotation.imgurl == ""}
+          <!-- display a message that says "no image" -->
+          <p class="hint">no image</p>
+      {:else}
+          <!-- display the image -->
+          <a href={annotation.imgurl} > image</a>
+      {/if}
+      
+      <p>Miro ID text:</p><p>{annotation.miroIDText ??'not yet set'}</p>
+      <p>Miro ID image:</p><p>{annotation.miroIDImage ??'not yet set'}</p>
+    </div>
+  {/if}
+
   </div>
 
 
@@ -135,6 +164,12 @@
     }
     .hint{
         color: grey;
+    }
+    .annotation-info{
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+
     }
 </style>
   
