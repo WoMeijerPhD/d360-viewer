@@ -103,3 +103,16 @@ export async function newUserLabel(userid, text = userid){
     let res = await uploadTextMiro(text, offset);
     return (res);
 }
+
+function createURL(annotation){
+    return (`https://d360-viewer.netlify.app/?time=${annotation.time}&yaw=${annotation.orientation.yaw}&pitch=${annotation.orientation.pitch}`);
+}
+
+export async function addURLMiro(annotation, userid){
+    console.log("adding url to miro");
+    let location = calcXY(annotation.time, userid);
+    location[0] += 250;
+    location[1] += 200;
+    let res = await uploadTextMiro(createURL(annotation), location);
+    return res;
+}

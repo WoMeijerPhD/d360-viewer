@@ -4,7 +4,7 @@
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
 	import {supabase} from "../components/Supabase-Client";
-	import {miroUploadAnnotation, newUserLabel} from "../components/miro-upload";
+	import {miroUploadAnnotation, newUserLabel, addURLMiro} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
 	import {addViewer} from "../components/Supabase-functions";
 
@@ -20,7 +20,10 @@
 	$: vidPaused = true;
 
 	// check if Aframe has a rotation-reader component
-	if (AFRAME.components['rotation-reader'] === undefined){
+	if (AFRAME.components['rotation-reader'] != undefined){
+		// remove the component
+		AFRAME.components['rotation-reader'] = undefined;
+	}
 		//  if it doesn't, register it
 		AFRAME.registerComponent('rotation-reader', {
 			init: function () {
@@ -40,7 +43,7 @@
 				
 			}
 		});
-	}
+	
 
 	
 	function moveCamera(aorientation) {    
@@ -154,6 +157,8 @@
 	   }
 	// then upload / update the annotation to miro
 		annotation = await miroUploadAnnotation(annotation, $storedUID);
+		// add the annotation link to miro
+		addURLMiro(annotation, $storedUID)
 		annotation.uploaded = true;
 		updateAnnotation(annotation);
    }
@@ -259,6 +264,7 @@
 
     </div>
     <div class="annotations">
+		<!-- {headPosition.yaw} {headPosition.pitch} -->
 		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}
 		/>
