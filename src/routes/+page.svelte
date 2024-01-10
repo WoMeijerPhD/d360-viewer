@@ -7,6 +7,8 @@
 	import {miroUploadAnnotation, newUserLabel, addURLMiro, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
 	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation} from "../components/Supabase-functions";
+	import Timeline from '../components/Timeline.svelte';
+	import {randomColor} from "../components/helper-functions";
 
 	$: headPositionText = "head position";
 	$: headPosition = {pitch: 0, yaw: 0};
@@ -18,7 +20,7 @@
 
 	$: duration =0;
 	$: vidPaused = true;
-
+	$: prevClosestID = 0;
 	// check if Aframe has a rotation-reader component
 	if (AFRAME.components['rotation-reader'] != undefined){
 		// remove the component
@@ -108,7 +110,7 @@
 		screenshotID = annotations.length+1;
 	}
 
-	function makeAnnotation(){
+	function makeAnnotation(forTest = false){
 		// code for creating an annotation locally
 		// pause the video
 		document.querySelector('#bike_ride').pause();
@@ -117,15 +119,35 @@
 		perscanvas = cloneCanvas(perscanvas);
 		let overallcanvas = document.querySelector('a-scene').components.screenshot.getCanvas('equarectangular');
 		overallcanvas = cloneCanvas(overallcanvas)
-		annotations = [ {text:"",time: time,orientation: {...headPosition}, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID}, ...annotations];
 
+		// add the annotation to the list of annotations
+		annotations = [ {text:"",time: time,orientation: {...headPosition}, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID, yOffset:0, color: randomColor(), active: false}, ...annotations];
 		console.log("uploading annotation", annotations[0].id);
-		uploadAnnotation(annotations[0]);
 		// sort the annotations by time
 		sortAnnotations();
+		calcYOffset();
+		if(!forTest){
+			// if we're testing locally, no need to add to miro or supabase yet...
+			uploadAnnotation(annotations[0]);
+		}
 	}
+
 	function sortAnnotations(){
 		annotations.sort((a,b) => a.time - b.time);
+	}
+
+	function calcYOffset(){
+		// todo: make this function + feauture smoother
+		// this function goes over the annotations and if two or more have the same time, it offsets them vertically by 4px
+		for (let i = 0; i < annotations.length-1; i++){
+			if (annotations[i].time == annotations[i+1].time){
+				// if they do, offset the next annotation by 4px compared to the current one
+				annotations[i+1].yOffset = annotations[i].yOffset + 1;
+			}
+			else{
+				annotations[i+1].yOffset = 0;
+			}
+		}
 	}
 
 
@@ -146,9 +168,15 @@
 	  deleteSticky(annotation.miroIDText);
     }
   
-    function updateAnnotation(annotation) {
+    function updateAnnotation(annotation, updateYOffset = true) {
     const i = annotations.findIndex((a) => a.id === annotation.id);
     annotations[i] = { ...annotations[i], ...annotation };
+
+	if(updateYOffset){
+		// todo: remove this jank 
+		// because this happens async there's a chance it overrides things like the yOffset, calculate that here, again...
+		calcYOffset();
+	}
     }
 	function updateAnnotationText(annotation){
 		// uploading the annotation also updates it, so just upload it
@@ -172,9 +200,6 @@
 		annotation.uploaded = true;
 		updateAnnotation(annotation);
    }
-
-   // begin user code
-//    $: userid = 0;
 
    async function setupUserID(){
 	if ($storedUID == null){
@@ -202,6 +227,42 @@
    
    }
 
+   function seek(newTime){
+	   time = newTime;
+	//    document.querySelector('#bike_ride').currentTime = newTime;
+   }
+   function calculateActive(){
+	// check there are annotations
+	if (annotations.length === 1 || annotations.length === 0){
+		return;
+	}
+		//  firs the screenshot whose time is closest to the current time
+		let closest = annotations.reduce((prev, curr) => {
+			return (Math.abs(curr.time - time) < Math.abs(prev.time - time) ? curr : prev);
+		});
+		// if the closest is already active, do nothing
+		if (closest.active){
+			return;
+		}
+		//  then mark it as active
+		closest.active = true;
+		//todo: unmark the previous closest
+		updateAnnotation(closest, false);
+		// find the previous closest
+		let prevClosest = annotations.find(a => a.id == prevClosestID);
+		// set it to inactive
+		if (prevClosest != undefined){
+			prevClosest.active = false;
+			updateAnnotation(prevClosest, false);
+		}
+		// set the prev closest to the current closest
+		prevClosestID = closest.id;
+
+   }
+   // todo: find a better way to calculate the closest annotation to the current time, and a better way to check
+   // check every 2 seconds
+   setInterval(calculateActive, 2000);
+
 
 
 </script>
@@ -224,24 +285,27 @@
         </div>
 		<!-- make the children of this  div appear inline-->
         <div class="controls">
-            <input type="range" id="slider" min="0" step="0.001" bind:value={time} max={duration} list ="markers">
-			<datalist id="markers">
-				{#each annotations as annotation (annotation.id)}
-					<option value={annotation.time}>{annotation.text}</option>
-				{/each}
-			</datalist>
-            <div id="time-text"> {time.toFixed(2)} / {duration}</div>
 			{#if vidPaused}
             <button class = "control-button" onclick="document.querySelector('#bike_ride').play()"> Play  </button>
 			{:else}
             <button class = "control-button" onclick="document.querySelector('#bike_ride').pause()">Pause</button>
 			{/if}
+			<div class = "timelines">
+				<!-- <input type="range" id="slider" min="0" step="0.001" bind:value={time} max={duration} list ="markers"> -->
+				<Timeline 
+				annotations={annotations}
+				duration={duration} 
+				currentTime={time}
+				on:seek={(e)=>seek(e.detail)}
+				/>
+			</div>
+            <div id="time-text"> {String(time.toFixed(2)).padStart(6, '0')} / {duration}</div>
+
             <!-- <div id="selector-text"> {headPositionText}</div> -->
 
 			<button class = "control-button" on:click={()=>{ makeAnnotation()}}>+</button>
-			<!-- <button on:click={()=>{ testUpload()}}>log annotation</button> -->
-
-
+			<!-- <button class = "control-button" on:click={()=>{ makeAnnotation(true)}}>local annotation</button>
+			<button class = "control-button" on:click={()=>{ calculateActive()}}>closest</button> -->
 
         </div>
 
@@ -294,7 +358,7 @@
       background-color: #ccffcc; /* Example color */
 	  display: flex;
 	  flex-direction: row;
-	  align-items: center;
+	  align-items: top;
 	  /* add a gap */
 	  gap: 10px;
 	  padding: 10px;
@@ -309,6 +373,7 @@
 
     #slider {
       flex: 1;
+	  width:100%
     }
 	/* make a class for buttons that is 100px wide and 60 px tall */
 	.control-button {
@@ -318,5 +383,8 @@
 	/* make a time class that is a monospaced font */
 	#time-text {
 	  font-family: monospace;
+	}
+	.timelines{
+		flex:1;
 	}
 </style>
