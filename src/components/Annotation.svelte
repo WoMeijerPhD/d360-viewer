@@ -53,15 +53,26 @@
         camera.components["look-controls"].pitchObject.rotation.x = aorientation.pitch,
         camera.components["look-controls"].yawObject.rotation.y = aorientation.yaw
     }
+    function scrollIntoView(){
+      // get the annotation element
+      const annotationElement = document.getElementById("annotation-"+annotation.id)
+      // scroll the annotation element into view
+      annotationElement.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"})
+    }
+    // if we're active, scroll into view
+    $: if (annotation.active){
+      scrollIntoView()
+    }
   
   </script>
   
 <!-- <div class="annotation"> -->
   <!-- if uploading -->
-  <div class="annotation {annotation.uploaded? 'annotation-uploaded':'annotation-uploading'}">
+  <div class="annotation {annotation.uploaded? 'annotation-uploaded':'annotation-uploading'} {annotation.active?'annotation-active':''}">
 
     <div class="topbar">
         <div>
+            <div class="color-header" style="background-color: {annotation.color}"></div>
             Time: {annotation.time.toFixed(2)}
         </div>
         <div>
@@ -77,23 +88,7 @@
     </div>
     <img src={annotation.perscanvas.toDataURL()} alt={annotation.text} class="annotationPerspective"/>
     <!-- <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/> -->
-  {#if editing}
-    <!-- markup for editing annotation: label, input text, Cancel and Save Button -->
-    <form on:submit|preventDefault={onSave} class="stack-small" on:keydown={e => e.key === 'Escape' && onCancel()}>
-      <div class="form-group">
-        <!-- <label for="annotation-{annotation.id}" class="annotation-label">New text for '{annotation.text}'</label> -->
-        <input bind:value={text} type="text" id="annotation-{annotation.id}" autoComplete="off" class="annotation-text" />
-      </div>
-      <div class="btn-group">
-          <button class="btn btn__primary annotation-edit" type="submit" disabled={!text}>
-            Save
-          </button>
-        <button class="btn annotation-cancel" on:click={onCancel} type="button">
-          Cancel
-          </button>
-      </div>
-    </form>
-  {:else}
+
     <!-- markup for displaying annotation: checkbox, label, Edit and Delete Button -->
 
         <!-- add an input form that lets the user edit the text -->
@@ -105,8 +100,7 @@
         <!-- add a button that moves the aframe camera to the orientation -->
         <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
         <!-- add a button that deletes the annotation -->
-        
-        {/if}
+
         {#if info}
         <hr/>
         <div class="annotation-info">
@@ -132,6 +126,9 @@
       </p>
       <p>Miro ID text: {annotation.miroIDText ??'not yet set'}</p>
       <p>Miro ID image: {annotation.miroIDImage ??'not yet set'}</p>
+      <p>yOffset:{annotation.yOffset}</p>
+      <p>color: {annotation.color}</p>
+      <p>active: {annotation.active}</p>
     </div>
   {/if}
 
@@ -143,6 +140,14 @@
 		width: 100%;
 		height: auto;
 	}
+  .color-header{
+    /* make this a 20px by 20px box that displays even if there is no child */
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    /* round the corners so it's a circle */
+    border-radius: 50%;
+  }
     .annotationOverall{
         width: 40%;
         height: auto;
@@ -157,6 +162,10 @@
         border-radius: 5px;
         /* add a dropshadow */
         box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.75);
+    }
+    .annotation-active{
+      /* make the border twice as big */
+      border: 3px solid rgba(0,0,0,0.75);
     }
     .annotation-uploading{
       /* make the background color very light grey */
