@@ -4,9 +4,9 @@
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
 	import {supabase} from "../components/Supabase-Client";
-	import {miroUploadAnnotation, newUserLabel, addURLMiro} from "../components/miro-upload";
+	import {miroUploadAnnotation, newUserLabel, addURLMiro, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
-	import {addViewer} from "../components/Supabase-functions";
+	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation} from "../components/Supabase-functions";
 
 	$: headPositionText = "head position";
 	$: headPosition = {pitch: 0, yaw: 0};
@@ -121,6 +121,11 @@
 
 		console.log("uploading annotation", annotations[0].id);
 		uploadAnnotation(annotations[0]);
+		// sort the annotations by time
+		sortAnnotations();
+	}
+	function sortAnnotations(){
+		annotations.sort((a,b) => a.time - b.time);
 	}
 
 
@@ -135,6 +140,10 @@
 
 	function removeAnnotation(annotation) {
       annotations = annotations.filter(a => a.id !== annotation.id)
+	  deleteAnnotation(annotation);
+	  // remove the annotation from miro
+	  deleteImage(annotation.miroIDImage);
+	  deleteSticky(annotation.miroIDText);
     }
   
     function updateAnnotation(annotation) {
@@ -152,54 +161,17 @@
 	// check if the image url is null
 	   if (annotation.imgurl == null){
 		   // if it is, upload the image to supabase
-		   annotation.imgurl = await supaUpload(annotation);
+		   annotation.imgurl = await supaUpload(annotation, $storedUID);
 		   updateAnnotation(annotation);
 	   }
 	// then upload / update the annotation to miro
 		annotation = await miroUploadAnnotation(annotation, $storedUID);
 		// add the annotation link to miro
 		addURLMiro(annotation, $storedUID)
+		annotation = await upsertAnnotation(annotation, $storedUID);
 		annotation.uploaded = true;
 		updateAnnotation(annotation);
    }
-
-   async function supaUpload(annotation){
-		const imageURL = annotation.perscanvas.toDataURL('image/png');
-		// Convert image data URL to binary data
-		const imageBlob = await fetch(imageURL).then(response => response.blob());
-
-
-		const fileName = `public/${$storedUID}/${annotation.id}.png`;
-
-		const { data, error } = await supabase
-		.storage
-		.from('annotationBucket')
-		.upload(fileName, imageBlob, {
-			cacheControl: '3600',
-			upsert: true
-		});
-		// console.log("data:", data);
-		if(error){
-			console.log("error uploading to supabase", error);
-		}
-
-		// time to get the public URL
-		// TODO: make this use the supabase command, currently it doesnt work
-		// const { urldata, urlerror } = supabase
-		// .storage
-		// .from('annotationBucket')
-		// .getPublicUrl(fileName)
-		// console.log("urldata:", urldata);
-		// if(urlerror){
-		// 	console.log("error getting url from supabase", urlerror);
-		// }
-		// //... but this works!
-		// console.log("test url:",`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
-		return (`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
-   }
-
-
-
 
    // begin user code
 //    $: userid = 0;
@@ -218,6 +190,17 @@
    setupUserID();
 
 
+   async function testSupa(annotation){
+	   console.log("testing supabase");
+	   console.log("annotation:", annotation);
+	   console.log(await upsertAnnotation(annotation));
+   }
+
+   function forceSupaTest(){
+	makeAnnotation();
+	testSupa(annotations[0]);
+   
+   }
 
 
 
@@ -264,6 +247,7 @@
 
     </div>
     <div class="annotations">
+		<!-- <button on:click={()=>{forceSupaTest()}}>force supa test</button> -->
 		<!-- {headPosition.yaw} {headPosition.pitch} -->
 		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}

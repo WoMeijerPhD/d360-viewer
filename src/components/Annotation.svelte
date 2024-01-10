@@ -9,6 +9,7 @@
     let text = annotation.text                    // hold the text of the annotation being edited
     let info = false
     let uploaded = false
+    let cachedText = annotation.text
     function update(updatedTodo) {
       annotation = { ...annotation, ...updatedTodo }    // applies modifications to annotation
       dispatch('update', annotation)              // emit update event
@@ -20,8 +21,15 @@
     }
   
     function onSave() {
-      update({ text: text })                // updates annotation text
-      editing = false                       // and exit editing mode
+      // check if the text is the same as the cached text
+      if (text != cachedText){
+        // if it is not, update the annotation
+        annotation = { ...annotation, text: text }    // applies modifications to annotation
+        dispatch('update', annotation)              // emit update event
+        // update the cached text
+        cachedText = text
+      }
+      editing = false                       // exit editing mode
     }
 
     function upLoad(){
@@ -55,14 +63,14 @@
     <div class="topbar">
         <div>
             Time: {annotation.time.toFixed(2)}
-            <span class="head-orient">
-              head pos: {annotation.orientation.yaw.toFixed(2)},{annotation.orientation.pitch.toFixed(2)}
-            </span>
         </div>
         <div>
           <!-- checkmark character -->
-
-          {annotation.uploaded? '\u2713':'\u27F3'}
+          {#if annotation.uploaded}
+            <div class="hint">{'\u2713'}</div>
+          {:else}
+              <div class="spinner">{'\u27F3'}</div>
+            {/if}
           <button on:click={onInfo}>i</button>
           <button on:click={onRemove}>X</button>
         </div>
@@ -90,44 +98,40 @@
 
         <!-- add an input form that lets the user edit the text -->
         <!-- if the annotation text is null -->
-        {#if annotation.text == ""}
-            <!-- display a message that says "no text" -->
-            <p class="hint">Annotation label</p>
-        {:else}
-            <!-- display the annotation text -->
-            <p>{annotation.text}</p>
-        {/if}
-        
-        <button type="button" class="btn" on:click={onEdit}>
-            edit
-        </button>
+        <!-- add a textbox that is the annotation text and updates when editing is done -->
+        <input bind:value={text} type="text" id="annotation-{annotation.id}" autoComplete="off" class="annotation-text" placeholder="annotation label" on:focusout={onSave} />
+
+
         <!-- add a button that moves the aframe camera to the orientation -->
         <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
         <!-- add a button that deletes the annotation -->
         
         {/if}
         {#if info}
+        <hr/>
         <div class="annotation-info">
-          <button type="button" class="btn" on:click={upLoad}>
+
+          <!-- <button type="button" class="btn" on:click={upLoad}>
             force upload
-        </button>
+        </button> -->
       <p>id: {annotation.id}</p>
+      <p>supa_id: {annotation.supa_id??"not set"}</p>
       <p>time: {annotation.time}</p>
       <p>text: {annotation.text}</p>
-      <p>orientation: {annotation.orientation.yaw},{annotation.orientation.pitch}</p>
+      <p>head pos: {annotation.orientation.yaw.toFixed(2)},{annotation.orientation.pitch.toFixed(2)}</p>
       <p>uploaded: {annotation.uploaded}</p>
-      <p>image URL:</p>
+      <p>image URL:
       <!-- if the imgurl is null -->
       {#if annotation.imgurl == ""}
           <!-- display a message that says "no image" -->
-          <p class="hint">no image</p>
+          no image
       {:else}
           <!-- display the image -->
-          <a href={annotation.imgurl} > image</a>
+          <a href={annotation.imgurl}> image</a>
       {/if}
-      
-      <p>Miro ID text:</p><p>{annotation.miroIDText ??'not yet set'}</p>
-      <p>Miro ID image:</p><p>{annotation.miroIDImage ??'not yet set'}</p>
+      </p>
+      <p>Miro ID text: {annotation.miroIDText ??'not yet set'}</p>
+      <p>Miro ID image: {annotation.miroIDImage ??'not yet set'}</p>
     </div>
   {/if}
 
@@ -166,6 +170,7 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        align-items: baseline;
     }
     .annotation-text{
         width: 100%;
@@ -178,12 +183,30 @@
     }
     .hint{
         color: grey;
+        display: inline-block;
     }
     .annotation-info{
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-
+      /* make the text smaller */
+      font-size: 0.5em;
     }
+    .spinner{
+      /* make the div shrink to child content */
+      display: inline-block;
+      animation-name: spin;
+      animation-duration: 5000ms;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear; 
+    }
+    @keyframes spin {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}
 </style>
   

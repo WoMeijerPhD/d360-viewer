@@ -9,7 +9,7 @@
       dispatch('update', amount)              // emit update event
     }
 </script>
-<h3>Miro info</h3>
+<h3>Miro info:</h3>
 <div class="miro-options">
     <a href="https://miro.com/app/board/uXjVMR8QuxI=/" target="_blank">View board</a>
     <div>

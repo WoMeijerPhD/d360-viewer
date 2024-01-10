@@ -5,6 +5,7 @@ const miroToken = import.meta.env.VITE_MIRO_TOKEN
 export const timeMultiplier = 100;
 export const userMultiplier = 600;
 
+
 export function calcXY(time, user){
     return [time * timeMultiplier, user * userMultiplier];
 }
@@ -115,4 +116,56 @@ export async function addURLMiro(annotation, userid){
     location[1] += 200;
     let res = await uploadTextMiro(createURL(annotation), location);
     return res;
+}
+
+export async function deleteSticky(itemID){
+    console.log("deleting item", itemID);
+    let res = await fetch(`https://api.miro.com/v2/boards/${miroBoard}/sticky_notes/${itemID}`, {
+        method: 'DELETE',
+        headers: header,
+    });
+    return res;
+}
+
+export async function deleteImage(itemID){
+    console.log("deleting item", itemID);
+    let res = await fetch(`https://api.miro.com/v2/boards/${miroBoard}/images/${itemID}`, {
+        method: 'DELETE',
+        headers: header,
+    });
+    return res;
+}
+
+// create a list of possible miro elements
+const miroElements = [
+    "images",
+    "sticky_notes"
+
+];
+
+
+export async function miroCommand(element, content, pos = {x:0, y:0}, method = "POST") {
+  // check if element is an accepted element
+  if(!miroElements.includes(element)){
+      console.log("element not supported");
+      return;
+  }
+  // todo: check if content is valid for element
+
+
+    const url = `https://api.miro.com/v2/boards/${miroBoard}/${element}`;
+
+    const payload = {
+        data: content,
+        x: pos.x,
+        y: pos.y,
+    };
+
+    const response = fetch(url, {
+        method: method,
+        headers: header,
+        body: JSON.stringify(payload)
+    });
+
+    return await response.then(res => res.json());
 }

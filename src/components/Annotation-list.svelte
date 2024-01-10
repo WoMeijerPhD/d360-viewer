@@ -47,7 +47,7 @@
           />
         </li>
     {:else}
-      <li>Press "+" to create a new note!</li>
+      <li>Press "+" to create a new annotation!</li>
     {/each}
     </ul>
   
