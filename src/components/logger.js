@@ -1,5 +1,6 @@
 // logger.js
 
+
 let data = [];
 let headers = [];
 
