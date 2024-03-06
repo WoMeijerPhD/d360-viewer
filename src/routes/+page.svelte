@@ -9,6 +9,7 @@
 	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
 	import {randomColor} from "../components/helper-functions";
+	import {clear,log, save, setHeaders} from "../components/logger";
 
 	$: headPositionText = "head position";
 	$: headPosition = {pitch: 0, yaw: 0};
@@ -29,6 +30,7 @@
 		//  if it doesn't, register it
 		AFRAME.registerComponent('rotation-reader', {
 			init: function () {
+				setHeaders(["time","video_time","video_paused", "x", "y", "z", "pitch", "yaw"]);
 			},
 			tick: function () {
 				// `this.el` is the element.
@@ -42,6 +44,15 @@
 				headPositionText = `x: ${x.toFixed(2)}, y: ${y.toFixed(2)}, z: ${z.toFixed(2)}`;
 				headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
 				headPosition.pitch=this.el.components['look-controls'].pitchObject.rotation.x;
+
+				// log all the things
+
+				// get the state of the video (paused or not)
+
+				// get the utc time
+				let utctime = Date.now();
+				let row = {utctime: utctime, video_state: vidPaused, time: time, x: x, y: y, z: z, pitch: headPosition.pitch, yaw: headPosition.yaw};
+				log(row);
 				
 			}
 		});
@@ -100,7 +111,6 @@
 	}
 	
 
-	
 	
 
 	// $: time = 0;
@@ -305,7 +315,7 @@
 
             <!-- <div id="selector-text"> {headPositionText}</div> -->
 
-			<button class = "control-button" on:click={()=>{ makeAnnotation()}}>+</button>
+			<button class = "control-button" on:click={()=>{ makeAnnotation(true)}}>+</button>
 			<!-- <button class = "control-button" on:click={()=>{ makeAnnotation(true)}}>local annotation</button>
 			<button class = "control-button" on:click={()=>{ calculateActive()}}>closest</button> -->
 
@@ -315,9 +325,13 @@
     <div class="annotations">
 		<!-- <button on:click={()=>{forceSupaTest()}}>force supa test</button> -->
 		<!-- {headPosition.yaw} {headPosition.pitch} -->
-		<MiroInfo userid={$storedUID}
+		<!-- <MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}
-		/>
+		/> -->
+		<!-- create a button to clear the log -->
+		<button on:click={()=>{clear()}}>clear log</button>
+		<!-- create a button to save the log -->
+		<button on:click={()=>{save()}}>save log</button>
 		<AnnotationList annotations={annotations} 
 			on:remove={(e) => removeAnnotation(e.detail)} 
 			on:update={(e)=> updateAnnotationText(e.detail)} 
