@@ -284,7 +284,7 @@
             <a-scene embedded screenshot="width: 1024; height: 512;" >
                 <a-assets>
                     <!-- svelte-ignore a11y-media-has-caption -->
-                    <video id="bike_ride"  loop="true" src="https://axxrj9ldvusx.objectstorage.eu-amsterdam-1.oci.customer-oci.com/n/axxrj9ldvusx/b/bucket-20240111-0932/o/bike_ride.mp4" bind:currentTime={time} bind:paused={vidPaused} 
+                    <video id="bike_ride"  loop="true" src="https://objectstorage.eu-amsterdam-1.oraclecloud.com/n/axxrj9ldvusx/b/bucket-20240111-0932/o/nyc-bike-ride.webm" bind:currentTime={time} bind:paused={vidPaused} 
 					on:loadeddata={handleLoaded}> </video>
 					<!-- todo: find better place to host this file, currently it's in my personal free oracle cloud account? 
 						not ideal, but it avoids issues with the github lfs bandwidth? -->
