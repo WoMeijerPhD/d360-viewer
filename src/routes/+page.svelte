@@ -304,6 +304,7 @@
             <div id="time-text"> {String(time.toFixed(2)).padStart(6, '0')} / {duration}</div>
 
             <!-- <div id="selector-text"> {headPositionText}</div> -->
+			<!-- random change -->
 
 			<button class = "control-button" on:click={()=>{ makeAnnotation()}}>+</button>
 			<!-- <button class = "control-button" on:click={()=>{ makeAnnotation(true)}}>local annotation</button>
