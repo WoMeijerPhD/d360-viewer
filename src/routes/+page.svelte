@@ -145,7 +145,11 @@
 		setUpCanvas(overlayCanvas, moveCamera);
 		// attached the rotation-reader component to the camera
 		document.querySelector('a-entity[camera]').setAttribute('rotation-reader', '');
+
+		// load the annotations from supabase
+		loadAnnotationsFromSupabase();
 	}
+	
 
     $: screenshotID = 0;
 
@@ -300,6 +304,8 @@
    // todo: find a better way to calculate the closest annotation to the current time, and a better way to check
    // check every 2 seconds
    setInterval(calculateActive, 1000);
+
+
 
 
 </script>
