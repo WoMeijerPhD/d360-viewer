@@ -8,14 +8,15 @@
 	import { storedUID } from '../components/storable.js'
 	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
-	import {randomColor, pitchYawToPercentage,percentageToPitchYaw} from "../components/helper-functions";
-
+	import {randomColor} from "../components/helper-functions";
+	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
 	$: relHeadPos = {pitch:0, yaw:0};
 
 
 	$: annotations =[];
+	let overlayCanvas = document.getElementById('overlay');
 
 
 	$: duration =0;
@@ -31,20 +32,12 @@
 		init: function () {
 		},
 		tick: function () {
-			// `this.el` is the element.
-			// `object3D` is the three.js object.
-			// `rotation` is a three.js Euler using radians. `quaternion` also available.
-			let x = this.el.object3D.rotation.x * 180 / Math.PI;
-			let y = this.el.object3D.rotation.y * 180 / Math.PI;
-			let z = this.el.object3D.rotation.z * 180 / Math.PI;
-			//  create a string that contains the x, y, and z values
+			// get the rotation of the camera
 			headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
 			headPosition.pitch = this.el.components['look-controls'].pitchObject.rotation.x;
-			const relPos = pitchYawToPercentage(headPosition.pitch, headPosition.yaw);
-			const calcPos = percentageToPitchYaw(relPos.pitch, relPos.yaw);
-			relHeadPos.pitch = calcPos.pitch;
-			relHeadPos.yaw = calcPos.yaw;
-			drawMinimapDot(relPos.pitch, relPos.yaw);
+			// draw the position on the minimap
+
+			drawMinimapDot(headPosition.pitch, headPosition.yaw, overlayCanvas);
 		}
 	});
 	
@@ -97,7 +90,8 @@
 		console.log("loaded");
 		updateVideoTime();
 		updateURLparams();
-		setUpCanvas();
+		overlayCanvas = document.getElementById('overlay');
+		setUpCanvas(overlayCanvas, moveCamera);
 		// attached the rotation-reader component to the camera
 		document.querySelector('a-entity[camera]').setAttribute('rotation-reader', '');
 	}
@@ -261,43 +255,6 @@
    // check every 2 seconds
    setInterval(calculateActive, 2000);
 
-   function drawMinimapDot(heightPer,widthPer){
-	// draws a red square on the canvas at the height and width percentage
-	var canvas = document.getElementById('overlay');
-	var ctx = canvas.getContext('2d');
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-	// Draw a bullseye on the canvas
-	ctx.lineWidth = 8;
-	ctx.strokeStyle = 'white';
-	ctx.beginPath();
-	ctx.arc(canvas.width * widthPer, canvas.height * heightPer, 5, 0, 2 * Math.PI);
-	ctx.stroke();
-	ctx.lineWidth = 4;
-	ctx.strokeStyle = 'black';
-	ctx.beginPath();
-	ctx.arc(canvas.width * widthPer, canvas.height * heightPer, 5, 0, 2 * Math.PI);
-	ctx.stroke();
-
-   }
-
-   function setUpCanvas(){
-	 // Add event listener to the canvas
-	 var canvas = document.getElementById('overlay');
-	 canvas.addEventListener('click', function(event) {
-		var rect = canvas.getBoundingClientRect();
-		var x = event.clientX - rect.left;
-		var y = event.clientY - rect.top;
-
-		var widthPer = x / rect.width;
-		var heightPer = y / rect.height;
-
-		// convert the percentage to pitch and yaw
-		const calcPos = percentageToPitchYaw(heightPer, widthPer);
-		// move the camera to the calculated position
-		moveCamera(calcPos);
-	});
-   }
 
 </script>
 
@@ -346,9 +303,7 @@
 			on:loadeddata={handleLoaded}> </video>
 			<canvas id="overlay"></canvas>
 		</div>
-		{headPosition.pitch.toFixed(2)} {headPosition.yaw.toFixed(2)} 
-		<br/>
-		{relHeadPos.pitch.toFixed(2)} {relHeadPos.yaw.toFixed(2)}
+		pitch: {headPosition.pitch.toFixed(2)}, yaw:{headPosition.yaw.toFixed(2)} 
 		
 		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}
