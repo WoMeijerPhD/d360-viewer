@@ -10,6 +10,8 @@
     let info = false
     let uploaded = false
     let cachedText = annotation.text
+
+    $: src = annotation.imgurl
     function update(updatedTodo) {
       annotation = { ...annotation, ...updatedTodo }    // applies modifications to annotation
       dispatch('update', annotation)              // emit update event
@@ -63,7 +65,14 @@
     $: if (annotation.active){
       scrollIntoView()
     }
-  
+   if (annotation.imgurl !== "" && annotation.imgurl !== null){
+    src = annotation.imgurl
+   }
+   else{
+    src = annotation.perscanvas.toDataURL()
+   }
+
+
   </script>
   
 <!-- <div class="annotation"> -->
@@ -71,7 +80,7 @@
   <div class="annotation {annotation.uploaded? 'annotation-uploaded':'annotation-uploading'} {annotation.active?'annotation-active':''}">
 
     <div class="topbar">
-        <div>
+        <div class = "color-header-container">
             <div class="color-header" style="background-color: {annotation.color}"></div>
             Time: {annotation.time.toFixed(2)}
         </div>
@@ -86,7 +95,8 @@
           <button on:click={onRemove}>X</button>
         </div>
     </div>
-    <img src={annotation.perscanvas.toDataURL()} alt={annotation.text} class="annotationPerspective"/>
+    <!-- if the perscanvas is not null, set the  -->
+    <img src={(annotation.imgurl == null|| annotation.imgurl == "")?  annotation.perscanvas.toDataURL():annotation.imgurl} alt={annotation.text} class="annotationPerspective"/>
     <!-- <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/> -->
 
     <!-- markup for displaying annotation: checkbox, label, Edit and Delete Button -->
@@ -200,6 +210,13 @@
       white-space: nowrap;
       /* make the text smaller */
       font-size: 0.5em;
+    }
+    .color-header-container{
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+
+      gap: 10px;
     }
     .spinner{
       /* make the div shrink to child content */

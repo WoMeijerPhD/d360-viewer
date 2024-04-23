@@ -99,6 +99,7 @@
         display: inline-block;
         position: relative;
         overflow-y: scroll;
+        overflow-x: hidden;
         scrollbar-width: thin;
         scrollbar-color: #888 transparent;
     }

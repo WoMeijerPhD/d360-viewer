@@ -2,6 +2,7 @@
     import { createEventDispatcher } from 'svelte'
     const dispatch = createEventDispatcher()
     export let userid;
+    export let getSupabaseAnnotations;
 
     let editing = false;
 
@@ -14,8 +15,8 @@
     <a href="https://miro.com/app/board/uXjVMR8QuxI=/" target="_blank">View board</a>
     <div>
         user ID: {userid}
-        <!-- <button  on:click={updateID()}>+</button> -->
     </div>
+    <button on:click={getSupabaseAnnotations()}>reload anno.</button>
 </div>
 <hr />
 <style>

@@ -6,7 +6,7 @@
 	import {supabase} from "../components/Supabase-Client";
 	import {miroUploadAnnotation, newUserLabel, addURLMiro, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
-	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation} from "../components/Supabase-functions";
+	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation,getAnnotationsByUser} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
 	import {randomColor} from "../components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
@@ -139,6 +139,18 @@
 		screenshotID = annotations.length+1;
 	}
 
+	async function loadAnnotationsFromSupabase(){
+		console.log("loading annotations from supabase");
+		// make sure the user id is set
+		if($storedUID == null){
+			await setupUserID();
+		}
+		// get the annotations from supabase
+		annotations = await getAnnotationsByUser($storedUID);
+		sortAnnotations();
+		calcYOffset();
+	}
+
 	function makeAnnotation(forTest = false){
 		// code for creating an annotation locally
 		// pause the video
@@ -163,6 +175,7 @@
 	}
 
 	function sortAnnotations(){
+		// sorts the annotations by time
 		annotations.sort((a,b) => a.time - b.time);
 	}
 
@@ -272,7 +285,7 @@
    }
    // todo: find a better way to calculate the closest annotation to the current time, and a better way to check
    // check every 2 seconds
-   setInterval(calculateActive, 2000);
+   setInterval(calculateActive, 1000);
 
 
 </script>
@@ -316,6 +329,7 @@
 
     </div>
     <div class="annotations">
+		<!-- add a button to log the annotations -->
 		<div id = "minimap">
 			<!-- svelte-ignore a11y-media-has-caption -->
 			<video id="bike_ride"  loop="true" src="https://axxrj9ldvusx.objectstorage.eu-amsterdam-1.oci.customer-oci.com/n/axxrj9ldvusx/b/bucket-20240111-0932/o/bike_ride.mp4" bind:currentTime={time} bind:paused={vidPaused} 
@@ -326,6 +340,7 @@
 		
 		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}
+		getSupabaseAnnotations={async () => { await loadAnnotationsFromSupabase()}}
 		/>
 		<AnnotationList annotations={annotations} 
 			on:remove={(e) => removeAnnotation(e.detail)} 

@@ -1,6 +1,8 @@
 // make a function to add a new row to the viewers database and return the id
 
 import {supabase} from "../components/Supabase-Client";
+import { v4 as uuidv4 } from 'uuid';
+import { randomColor } from "./helper-functions";
 
 export async function addViewer() {
     const { data, error } = await supabase
@@ -30,6 +32,7 @@ export async function upsertAnnotation(annotation, storedUID){
         miroIDImage: annotation.miroIDImage,
         user_id: storedUID,
         fov: annotation.fov,
+        color: annotation.color,
     }
     // if the annotation has a supa_id, use that to update the database
     if(annotation.supa_id){
@@ -71,14 +74,42 @@ export async function deleteAnnotation(annotation){
     return data[0];
 
 }
+export async function getAnnotationsByUser(userID){
+    const { data, error } = await supabase
+    .from('annotations')
+    .select()
+    .eq('user_id', userID)
+    .eq('deleted', false);
+    if(error){
+        console.log("error getting annotations by user: ", error);
+    }
+
+    // for each item in data, set the supa_id to the id, and set uploaded to true
+    data.forEach(item => {
+        item.supa_id = item.id;
+        item.uploaded = true;
+        // convert the orientation to an object
+        item.orientation = {pitch: item.orientation[0], yaw: item.orientation[1]};
+        // if the color is not set, set it to a random color
+        if(!item.color){
+            item.color = randomColor();
+        }
+    });
+    return data;
+
+}
 
 export async function supaUpload(annotation, storedUID){
     const imageURL = annotation.perscanvas.toDataURL('image/png');
     // Convert image data URL to binary data
     const imageBlob = await fetch(imageURL).then(response => response.blob());
 
+    // generate a uuid for the image
 
-    const fileName = `public/${storedUID}/${annotation.id}.png`;
+    // Generate a UUID for the image
+    const uuid = uuidv4();
+
+    const fileName = `public/${storedUID}/${uuid}.png`;
 
     const { data, error } = await supabase
     .storage
@@ -92,17 +123,5 @@ export async function supaUpload(annotation, storedUID){
         console.log("error uploading to supabase", error);
     }
 
-    // time to get the public URL
-    // TODO: make this use the supabase command, currently it doesnt work
-    // const { urldata, urlerror } = supabase
-    // .storage
-    // .from('annotationBucket')
-    // .getPublicUrl(fileName)
-    // console.log("urldata:", urldata);
-    // if(urlerror){
-    // 	console.log("error getting url from supabase", urlerror);
-    // }
-    // //... but this works!
-    // console.log("test url:",`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
-    return (`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
+     return (`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
 }
