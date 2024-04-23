@@ -12,16 +12,16 @@
 	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
-	$: relHeadPos = {pitch:0, yaw:0};
-
-
 	$: annotations =[];
-	let overlayCanvas = document.getElementById('overlay');
-
-
 	$: duration =0;
 	$: vidPaused = true;
+	$: fov = 80;
+
 	$: prevClosestID = 0;
+	
+	let overlayCanvas = document.getElementById('overlay');
+	
+	
 	// check if Aframe has a rotation-reader component
 	if (AFRAME.components['rotation-reader'] != undefined){
 		// remove the component
@@ -36,7 +36,6 @@
 			headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
 			headPosition.pitch = this.el.components['look-controls'].pitchObject.rotation.x;
 			// draw the position on the minimap
-
 			drawMinimapDot(headPosition.pitch, headPosition.yaw, overlayCanvas);
 		}
 	});
@@ -46,12 +45,50 @@
         camera.components["look-controls"].pitchObject.rotation.x = aorientation.pitch,
         camera.components["look-controls"].yawObject.rotation.y = aorientation.yaw
     }
-	// add an event listener to the document that listens for the spacebar to pause the video
-	document.addEventListener('keydown', function(event) {
-		if (event.code === 'Space' && document.activeElement.nodeName !== 'INPUT') {
+
+	// function to set the fov of the camera
+	function setFOV(newFOV){
+		let camera =  document.querySelector('a-entity[camera]')
+		camera.setAttribute('camera', 'fov', newFOV);
+		fov = newFOV;
+	}
+
+	// function to change the fov of the camera
+	function deltaFOV(delta){
+		let camera =  document.querySelector('a-entity[camera]')
+		let tempfov = camera.getAttribute('camera').fov;
+		tempfov += delta;
+		if(tempfov < 10){
+			tempfov = 10;
+		}
+		if(tempfov > 170){
+			tempfov = 170;
+		}
+		camera.setAttribute('camera', 'fov', tempfov);
+		fov = tempfov;
+	}
+
+	// add an event listener so q and e change the fov    
+	document.addEventListener('keyup', function(event) {
+		if (document.activeElement.nodeName === 'INPUT'){
+			// the user is entering text, so don't process the key commands
+			return;
+		}
+		if (event.code === 'KeyQ') {
+			deltaFOV(-5);
+		}
+		if (event.code === 'KeyE') {
+			deltaFOV(5);
+		}
+		// if the w key is pressed, set the fov to 80
+		if (event.code === 'KeyW') {
+			setFOV(80);
+		}
+		if (event.code === 'Space') {
 			vidPaused = !vidPaused;
 		}
 	});
+
 
 	function updateVideoTime(){
 		duration = document.querySelector('#bike_ride').duration;
@@ -113,15 +150,16 @@
 		overallcanvas = cloneCanvas(overallcanvas)
 
 		// add the annotation to the list of annotations
-		annotations = [ {text:"",time: time,orientation: {...headPosition}, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID, yOffset:0, color: randomColor(), active: false}, ...annotations];
+		annotations = [ {text:"",time: time,orientation: {...headPosition}, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID, yOffset:0, color: randomColor(), active: false,fov: fov}, ...annotations];
 		console.log("uploading annotation", annotations[0].id);
-		// sort the annotations by time
-		sortAnnotations();
-		calcYOffset();
 		if(!forTest){
 			// if we're testing locally, no need to add to miro or supabase yet...
 			uploadAnnotation(annotations[0]);
 		}
+		// sort the annotations by time
+		sortAnnotations();
+		// calculate the yOffset
+		calcYOffset();
 	}
 
 	function sortAnnotations(){
@@ -129,17 +167,7 @@
 	}
 
 	function calcYOffset(){
-		// todo: make this function + feauture smoother
-		// this function goes over the annotations and if two or more have the same time, it offsets them vertically by 4px
-		for (let i = 0; i < annotations.length-1; i++){
-			if (annotations[i].time == annotations[i+1].time){
-				// if they do, offset the next annotation by 4px compared to the current one
-				annotations[i+1].yOffset = annotations[i].yOffset + 1;
-			}
-			else{
-				annotations[i+1].yOffset = 0;
-			}
-		}
+		annotations.forEach((a, i) => a.yOffset = i*12);
 	}
 
 
@@ -178,13 +206,13 @@
    async function  uploadAnnotation(annotation){
 	annotation.uploaded = false;
 	updateAnnotation(annotation);
-	// check if the image url is null
+		// check if the image url is null
 	   if (annotation.imgurl == null){
 		   // if it is, upload the image to supabase
 		   annotation.imgurl = await supaUpload(annotation, $storedUID);
 		   updateAnnotation(annotation);
 	   }
-	// then upload / update the annotation to miro
+		// then upload / update the annotation to miro
 		annotation = await miroUploadAnnotation(annotation, $storedUID);
 		// add the annotation link to miro
 		addURLMiro(annotation, $storedUID)
@@ -194,30 +222,17 @@
    }
 
    async function setupUserID(){
-	if ($storedUID == null){
-		// get a new userID from supabase
-		$storedUID = await addViewer();
-		let res = await newUserLabel($storedUID, `user number ${$storedUID}`);
-	}
+		if ($storedUID == null){
+			// get a new userID from supabase
+			$storedUID = await addViewer();
+			let res = await newUserLabel($storedUID, `user number ${$storedUID}`);
+		}
    }
 	function updateUserID(newID){
-	$storedUID = newID;
+		$storedUID = newID;
    }
    // check the user id on page load
    setupUserID();
-
-
-   async function testSupa(annotation){
-	   console.log("testing supabase");
-	   console.log("annotation:", annotation);
-	   console.log(await upsertAnnotation(annotation));
-   }
-
-   function forceSupaTest(){
-	makeAnnotation();
-	testSupa(annotations[0]);
-   
-   }
 
    function seek(newTime){
 	   time = newTime;
@@ -228,7 +243,7 @@
 	if (annotations.length === 1 || annotations.length === 0){
 		return;
 	}
-		//  firs the screenshot whose time is closest to the current time
+		//  find the screenshot whose time is closest to the current time
 		let closest = annotations.reduce((prev, curr) => {
 			return (Math.abs(curr.time - time) < Math.abs(prev.time - time) ? curr : prev);
 		});
@@ -249,6 +264,10 @@
 		}
 		// set the prev closest to the current closest
 		prevClosestID = closest.id;
+
+		// scroll the annotation list to the active annotation
+		let annotationBar = document.getElementById('annotation-bar');
+		annotationBar.scrollTo(0, closest.yOffset);
 
    }
    // todo: find a better way to calculate the closest annotation to the current time, and a better way to check
@@ -303,7 +322,7 @@
 			on:loadeddata={handleLoaded}> </video>
 			<canvas id="overlay"></canvas>
 		</div>
-		pitch: {headPosition.pitch.toFixed(2)}, yaw:{headPosition.yaw.toFixed(2)} 
+		pitch: {headPosition.pitch.toFixed(2)}, yaw:{headPosition.yaw.toFixed(2)}, <span title="use q/e to change FOV, w to reset">fov: {fov}</span>
 		
 		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}

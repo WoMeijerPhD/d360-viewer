@@ -29,6 +29,7 @@ export async function upsertAnnotation(annotation, storedUID){
         miroIDText: annotation.miroIDText,
         miroIDImage: annotation.miroIDImage,
         user_id: storedUID,
+        fov: annotation.fov,
     }
     // if the annotation has a supa_id, use that to update the database
     if(annotation.supa_id){

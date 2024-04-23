@@ -60,10 +60,12 @@
     <div id="annotation-bar">
         <!-- loop over the annotations and add a ^ for each -->
         {#each annotations as annotation (annotation.id)}
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div 
             class="annotation" 
             title={annotation.text} 
-            style="left: {(annotation.time * 100/ duration)}%; top:{annotation.yOffset*yMultiplier}px;background-color:{annotation.color}" 
+            style="left: {(annotation.time * 100/ duration)}%; top:{annotation.yOffset}px;background-color:{annotation.color}" 
             on:click={()=>{moveToAnnotation(annotation)}}>
             </div>
             
@@ -92,10 +94,13 @@
     }
     #annotation-bar{
         width: 100%;
-        height: 20px;
+        height: 10vh;
         background-color: transparent;
         display: inline-block;
         position: relative;
+        overflow-y: scroll;
+        scrollbar-width: thin;
+        scrollbar-color: #888 transparent;
     }
     .annotation{
         width: 10px;
