@@ -8,9 +8,8 @@
 	import { storedUID } from '../components/storable.js'
 	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
-	import {randomColor} from "../components/helper-functions";
+	import {randomColor, pitchYawToPercentage,percentageToPitchYaw} from "../components/helper-functions";
 
-	$: headPositionText = "head position";
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
 	$: relHeadPos = {pitch:0, yaw:0};
@@ -28,28 +27,26 @@
 		AFRAME.components['rotation-reader'] = undefined;
 	}
 		//  register a new component that reads the rotation of the camera
-		AFRAME.registerComponent('rotation-reader', {
-			init: function () {
-			},
-			tick: function () {
-				// `this.el` is the element.
-				// `object3D` is the three.js object.
-				// `rotation` is a three.js Euler using radians. `quaternion` also available.
-				let x = this.el.object3D.rotation.x * 180 / Math.PI;
-				let y = this.el.object3D.rotation.y * 180 / Math.PI;
-				let z = this.el.object3D.rotation.z * 180 / Math.PI;
-				//  create a string that contains the x, y, and z values
-				headPositionText = `x: ${x.toFixed(2)}, y: ${y.toFixed(2)}, z: ${z.toFixed(2)}`;
-				headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
-				headPosition.pitch = this.el.components['look-controls'].pitchObject.rotation.x;
-				const relPos = pitchYawToPercentage(headPosition.pitch, headPosition.yaw);
-				relHeadPos.pitch = relPos.pitch;
-				relHeadPos.yaw = relPos.yaw;
-				drawMinimapDot(relPos.pitch, relPos.yaw);
-			}
-		});
-	
-
+	AFRAME.registerComponent('rotation-reader', {
+		init: function () {
+		},
+		tick: function () {
+			// `this.el` is the element.
+			// `object3D` is the three.js object.
+			// `rotation` is a three.js Euler using radians. `quaternion` also available.
+			let x = this.el.object3D.rotation.x * 180 / Math.PI;
+			let y = this.el.object3D.rotation.y * 180 / Math.PI;
+			let z = this.el.object3D.rotation.z * 180 / Math.PI;
+			//  create a string that contains the x, y, and z values
+			headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
+			headPosition.pitch = this.el.components['look-controls'].pitchObject.rotation.x;
+			const relPos = pitchYawToPercentage(headPosition.pitch, headPosition.yaw);
+			const calcPos = percentageToPitchYaw(relPos.pitch, relPos.yaw);
+			relHeadPos.pitch = calcPos.pitch;
+			relHeadPos.yaw = calcPos.yaw;
+			drawMinimapDot(relPos.pitch, relPos.yaw);
+		}
+	});
 	
 	function moveCamera(aorientation) {    
         let camera =  document.querySelector('a-entity[camera]')
@@ -100,6 +97,9 @@
 		console.log("loaded");
 		updateVideoTime();
 		updateURLparams();
+		setUpCanvas();
+		// attached the rotation-reader component to the camera
+		document.querySelector('a-entity[camera]').setAttribute('rotation-reader', '');
 	}
 
     $: screenshotID = 0;
@@ -261,24 +261,42 @@
    // check every 2 seconds
    setInterval(calculateActive, 2000);
 
-
-   // create a script to convert the pitch and yaw to a percentage of the total rotation
-   function pitchYawToPercentage(pitch, yaw){
-	   // convert the pitch and yaw (in radians) to a percentage of the total rotation
-		let pitchPercentage =1- ((pitch + Math.PI/2) / Math.PI)%1;
-		let yawPercentage =1- ((yaw +Math.PI/2) / (2 * Math.PI))%1;
-		return {pitch: pitchPercentage, yaw: yawPercentage};
-   }
-
    function drawMinimapDot(heightPer,widthPer){
 	// draws a red square on the canvas at the height and width percentage
 	var canvas = document.getElementById('overlay');
 	var ctx = canvas.getContext('2d');
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-	// Draw something on the canvas
-	ctx.fillStyle = 'red';
-	ctx.fillRect(canvas.width * widthPer -5, canvas.height * heightPer-5, 10, 10);
+	// Draw a bullseye on the canvas
+	ctx.lineWidth = 8;
+	ctx.strokeStyle = 'white';
+	ctx.beginPath();
+	ctx.arc(canvas.width * widthPer, canvas.height * heightPer, 5, 0, 2 * Math.PI);
+	ctx.stroke();
+	ctx.lineWidth = 4;
+	ctx.strokeStyle = 'black';
+	ctx.beginPath();
+	ctx.arc(canvas.width * widthPer, canvas.height * heightPer, 5, 0, 2 * Math.PI);
+	ctx.stroke();
+
+   }
+
+   function setUpCanvas(){
+	 // Add event listener to the canvas
+	 var canvas = document.getElementById('overlay');
+	 canvas.addEventListener('click', function(event) {
+		var rect = canvas.getBoundingClientRect();
+		var x = event.clientX - rect.left;
+		var y = event.clientY - rect.top;
+
+		var widthPer = x / rect.width;
+		var heightPer = y / rect.height;
+
+		// convert the percentage to pitch and yaw
+		const calcPos = percentageToPitchYaw(heightPer, widthPer);
+		// move the camera to the calculated position
+		moveCamera(calcPos);
+	});
    }
 
 </script>
@@ -288,15 +306,8 @@
 
         <div class="aframe">
             <a-scene embedded screenshot="width: 1024; height: 512;" >
-                <a-assets>
-                    <!-- svelte-ignore a11y-media-has-caption -->
-
-					<!-- todo: find better place to host this file, currently it's in my personal free oracle cloud account? 
-						not ideal, but it avoids issues with the github lfs bandwidth? -->
-                </a-assets>
-                <a-entity camera look-controls rotation-reader timer>
-                    <!-- <a-video src="#bike_ride" width="16" height="9" position="5 5 -20"></a-video> -->
-                </a-entity>
+                <!-- <a-entity id="main-camera" camera look-controls rotation-reader timer> 
+                </a-entity> -->
                 <a-videosphere autoplay src="#bike_ride"></a-videosphere>
             </a-scene>
         </div>
@@ -335,7 +346,8 @@
 			on:loadeddata={handleLoaded}> </video>
 			<canvas id="overlay"></canvas>
 		</div>
-		<!-- {headPosition.yaw} {headPosition.pitch} -->
+		{headPosition.pitch.toFixed(2)} {headPosition.yaw.toFixed(2)} 
+		<br/>
 		{relHeadPos.pitch.toFixed(2)} {relHeadPos.yaw.toFixed(2)}
 		
 		<MiroInfo userid={$storedUID}
@@ -427,5 +439,7 @@
 		left: 0;
 		width: 100%;
 		height: auto;
+		/* set the transparency to 50% */
+		opacity: 0.5;
 	}
 </style>

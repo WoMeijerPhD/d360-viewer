@@ -48,6 +48,20 @@ export const htmlColor2miro = (htmlColor) => {
     }
 }
 
+// a function that takes the pitch and yaw of the camera and returns the percentage of the total rotation
+export function pitchYawToPercentage(pitch, yaw){
+    // convert the pitch and yaw (in radians) to a percentage of the total rotation
+    let pitchPercentage =1- ((pitch + Math.PI/2) / Math.PI)%1;
+    let yawPercentage =1- ((yaw +Math.PI/2) / (2 * Math.PI))%1;
+    return {pitch: pitchPercentage, yaw: yawPercentage};
+}
+
+export function percentageToPitchYaw(pitchPercentage, yawPercentage){
+    // convert the percentage of the total rotation to pitch and yaw (in radians)
+    let pitch = (1-pitchPercentage) * Math.PI - Math.PI/2;
+    let yaw = (1-yawPercentage) * 2 * Math.PI - Math.PI/2;
+    return {pitch: pitch, yaw: yaw};
+}
 
 // export const randomColor = () => {
 //     return "#" + Math.floor(Math.random() * 16777215).toString(16);
