@@ -13,6 +13,7 @@
 	$: headPositionText = "head position";
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
+	$: relHeadPos = {pitch:0, yaw:0};
 
 
 	$: annotations =[];
@@ -26,7 +27,7 @@
 		// remove the component
 		AFRAME.components['rotation-reader'] = undefined;
 	}
-		//  if it doesn't, register it
+		//  register a new component that reads the rotation of the camera
 		AFRAME.registerComponent('rotation-reader', {
 			init: function () {
 			},
@@ -34,15 +35,17 @@
 				// `this.el` is the element.
 				// `object3D` is the three.js object.
 				// `rotation` is a three.js Euler using radians. `quaternion` also available.
-				// console.log(this.el.object3D.rotation);
 				let x = this.el.object3D.rotation.x * 180 / Math.PI;
 				let y = this.el.object3D.rotation.y * 180 / Math.PI;
 				let z = this.el.object3D.rotation.z * 180 / Math.PI;
 				//  create a string that contains the x, y, and z values
 				headPositionText = `x: ${x.toFixed(2)}, y: ${y.toFixed(2)}, z: ${z.toFixed(2)}`;
 				headPosition.yaw = this.el.components['look-controls'].yawObject.rotation.y;
-				headPosition.pitch=this.el.components['look-controls'].pitchObject.rotation.x;
-				
+				headPosition.pitch = this.el.components['look-controls'].pitchObject.rotation.x;
+				const relPos = pitchYawToPercentage(headPosition.pitch, headPosition.yaw);
+				relHeadPos.pitch = relPos.pitch;
+				relHeadPos.yaw = relPos.yaw;
+				drawMinimapDot(relPos.pitch, relPos.yaw);
 			}
 		});
 	
@@ -55,9 +58,9 @@
     }
 	// add an event listener to the document that listens for the spacebar to pause the video
 	document.addEventListener('keydown', function(event) {
-      if (event.keyCode === 32 && document.activeElement.nodeName !== 'INPUT') {
-		vidPaused = !vidPaused;
-	}
+		if (event.code === 'Space' && document.activeElement.nodeName !== 'INPUT') {
+			vidPaused = !vidPaused;
+		}
 	});
 
 	function updateVideoTime(){
@@ -98,12 +101,7 @@
 		updateVideoTime();
 		updateURLparams();
 	}
-	
 
-	
-	
-
-	// $: time = 0;
     $: screenshotID = 0;
 
 	function calcScreenshotID() {
@@ -264,6 +262,24 @@
    setInterval(calculateActive, 2000);
 
 
+   // create a script to convert the pitch and yaw to a percentage of the total rotation
+   function pitchYawToPercentage(pitch, yaw){
+	   // convert the pitch and yaw (in radians) to a percentage of the total rotation
+		let pitchPercentage =1- ((pitch + Math.PI/2) / Math.PI)%1;
+		let yawPercentage =1- ((yaw +Math.PI/2) / (2 * Math.PI))%1;
+		return {pitch: pitchPercentage, yaw: yawPercentage};
+   }
+
+   function drawMinimapDot(heightPer,widthPer){
+	// draws a red square on the canvas at the height and width percentage
+	var canvas = document.getElementById('overlay');
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	// Draw something on the canvas
+	ctx.fillStyle = 'red';
+	ctx.fillRect(canvas.width * widthPer -5, canvas.height * heightPer-5, 10, 10);
+   }
 
 </script>
 
@@ -274,8 +290,7 @@
             <a-scene embedded screenshot="width: 1024; height: 512;" >
                 <a-assets>
                     <!-- svelte-ignore a11y-media-has-caption -->
-                    <video id="bike_ride"  loop="true" src="https://axxrj9ldvusx.objectstorage.eu-amsterdam-1.oci.customer-oci.com/n/axxrj9ldvusx/b/bucket-20240111-0932/o/bike_ride.mp4" bind:currentTime={time} bind:paused={vidPaused} 
-					on:loadeddata={handleLoaded}> </video>
+
 					<!-- todo: find better place to host this file, currently it's in my personal free oracle cloud account? 
 						not ideal, but it avoids issues with the github lfs bandwidth? -->
                 </a-assets>
@@ -314,8 +329,15 @@
 
     </div>
     <div class="annotations">
-		<!-- <button on:click={()=>{forceSupaTest()}}>force supa test</button> -->
+		<div id = "minimap">
+			<!-- svelte-ignore a11y-media-has-caption -->
+			<video id="bike_ride"  loop="true" src="https://axxrj9ldvusx.objectstorage.eu-amsterdam-1.oci.customer-oci.com/n/axxrj9ldvusx/b/bucket-20240111-0932/o/bike_ride.mp4" bind:currentTime={time} bind:paused={vidPaused} 
+			on:loadeddata={handleLoaded}> </video>
+			<canvas id="overlay"></canvas>
+		</div>
 		<!-- {headPosition.yaw} {headPosition.pitch} -->
+		{relHeadPos.pitch.toFixed(2)} {relHeadPos.yaw.toFixed(2)}
+		
 		<MiroInfo userid={$storedUID}
 		on:update={(e)=> updateUserID(e.detail)}
 		/>
@@ -324,7 +346,6 @@
 			on:update={(e)=> updateAnnotationText(e.detail)} 
 			on:upload={(e)=> uploadAnnotation(e.detail)}
 			/>
-	  <!-- <AnnotationList annotations={annotations}/> -->
     </div>
         
     </div>
@@ -389,5 +410,22 @@
 	}
 	.timelines{
 		flex:1;
+	}
+	#minimap{
+		position: relative;
+		width: 100%;
+		height: auto;
+	}
+	#bike_ride{
+		width: 100%;
+		height: auto;
+	}
+	#overlay{
+		/* position the overlay on top of the video, at the minimap */
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: auto;
 	}
 </style>
