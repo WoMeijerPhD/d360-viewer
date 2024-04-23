@@ -119,6 +119,20 @@
 			//  move the camera to the specified position
 			moveCamera(headPosition);
 		}
+		if(urlParams.has('fov')){
+			//  check that fov is a float
+			if (isNaN(parseFloat(urlParams.get('fov')))){
+				fov = 80;
+			}
+			else{
+				fov = parseFloat(urlParams.get('fov'));
+				setFOV(fov);
+			}
+		}
+		// check if the user id is set
+		if(urlParams.has('uid')){
+			$storedUID = urlParams.get('uid');
+		}
 	}
 
 

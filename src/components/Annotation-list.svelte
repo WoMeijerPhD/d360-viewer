@@ -56,6 +56,7 @@
   /* make the annotation class list items not have a bullet point */
   .annotations{
     list-style-type: none;
+    
   }
   ul {
 
