@@ -16,7 +16,7 @@
 	$: duration =0;
 	$: vidPaused = true;
 	$: fov = 80;
-
+	$: viewuserID = -1;
 	$: prevClosestID = 0;
 	
 	let overlayCanvas = document.getElementById('overlay');
@@ -131,7 +131,7 @@
 		}
 		// check if the user id is set
 		if(urlParams.has('uid')){
-			$storedUID = urlParams.get('uid');
+			viewuserID = urlParams.get('uid');
 		}
 	}
 
@@ -164,7 +164,7 @@
 			await setupUserID();
 		}
 		// get the annotations from supabase
-		annotations = await getAnnotationsByUser($storedUID);
+		annotations = await getAnnotationsByUser(viewuserID);
 		sortAnnotations();
 		calcYOffset();
 	}
@@ -258,6 +258,9 @@
 			// get a new userID from supabase
 			$storedUID = await addViewer();
 			let res = await newUserLabel($storedUID, `user number ${$storedUID}`);
+		}
+		if(viewuserID == -1){
+			viewuserID = newID;
 		}
    }
 	function updateUserID(newID){
