@@ -33,7 +33,7 @@
   </script>
   
   <!-- Annotations.svelte -->
-  <div class="todoapp stack-large">
+  <div class="annotation-list">
   <h3>Annotations:</h3>
   
     <!-- Annotations -->
