@@ -6,7 +6,7 @@
 	import {supabase} from "../components/Supabase-Client";
 	import {miroUploadAnnotation, newUserLabel, addURLMiro, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
-	import {addViewer, upsertAnnotation, supaUpload, deleteAnnotation,getAnnotationsByUser} from "../components/Supabase-functions";
+	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
 	import {randomColor} from "../components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
@@ -240,7 +240,8 @@
 		// check if the image url is null
 	   if (annotation.imgurl == null){
 		   // if it is, upload the image to supabase
-		   annotation.imgurl = await supaUpload(annotation, $storedUID);
+		   annotation.imgurl = await supaUploadImage(annotation.perscanvas, $storedUID);
+		   annotation.equarecimg = await supaUploadImage(annotation.overallcanvas, $storedUID);
 		   updateAnnotation(annotation);
 	   }
 		// then upload / update the annotation to miro

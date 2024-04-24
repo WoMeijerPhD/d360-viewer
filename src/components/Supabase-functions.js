@@ -33,6 +33,7 @@ export async function upsertAnnotation(annotation, storedUID){
         user_id: storedUID,
         fov: annotation.fov,
         color: annotation.color,
+        equarecimg: annotation.equarecimg,
     }
     // if the annotation has a supa_id, use that to update the database
     if(annotation.supa_id){
@@ -99,8 +100,10 @@ export async function getAnnotationsByUser(userID){
 
 }
 
-export async function supaUpload(annotation, storedUID){
-    const imageURL = annotation.perscanvas.toDataURL('image/png');
+
+
+export async function supaUploadImage(image, storedUID){
+    const imageURL = image.toDataURL('image/png');
     // Convert image data URL to binary data
     const imageBlob = await fetch(imageURL).then(response => response.blob());
 
