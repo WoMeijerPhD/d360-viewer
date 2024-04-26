@@ -139,8 +139,13 @@
 		if(urlParams.has('annoID')){
 			// try and load the annotation from supabase
 			const annoID = urlParams.get('annoID');
+
+			// get the current url
+			let currentURL = window.location.href;
+			// convert the url to a uri
+			currentURL = encodeURI(currentURL);
 			// create an oembed url
-			const oembedURL = `https://d360-viewer.netlify.app/oembed?annotationID=${annoID}`;
+			const oembedURL = `https://d360-viewer.netlify.app/oembed?url=${currentURL}`;
 			// add the oembed url to the header
 			const link = document.createElement('link');
 			link.rel = 'alternate';
