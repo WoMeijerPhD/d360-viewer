@@ -66,11 +66,18 @@
       scrollIntoView()
     }
     let src = ""
-    try{
-      src = annotation.perscanvas.toDataURL()
+
+    if (annotation.perscanvas == null){
+      console.log("perscanvas is null")
     }
-    catch{
-      console.log("some weird image nonsense, fix this later")
+    else{
+
+      try{
+        src = annotation.perscanvas.toDataURL()
+      }
+      catch{
+        console.log("some weird image nonsense, fix this later")
+      }
     }
 
 
