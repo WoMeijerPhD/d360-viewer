@@ -3,10 +3,10 @@
 	import AnnotationList from '../components/Annotation-list.svelte';
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
-	import {supabase} from "../components/Supabase-Client";
+	// import {supabase} from "../components/Supabase-Client";
 	import {miroUploadAnnotation, newUserLabel, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
-	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID} from "../components/Supabase-functions";
+	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID} from "$lib/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
 	import {randomColor} from "../components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "../components/minimap";

@@ -1,8 +1,8 @@
 // make a function to add a new row to the viewers database and return the id
 
-import {supabase} from "../components/Supabase-Client";
+import {supabase} from "$lib/Supabase-Client";
 import { v4 as uuidv4 } from 'uuid';
-import { randomColor } from "./helper-functions";
+import { randomColor } from "../components/helper-functions";
 
 export async function addViewer() {
     const { data, error } = await supabase
