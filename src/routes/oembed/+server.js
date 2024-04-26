@@ -20,7 +20,7 @@ export async function GET({url}) {
 				"version": "1.0",
 				"type": "photo",
 				"title": annotation.text,
-				"url": annotation.image_url,
+				"url": annotation.imgurl,
 				"width": 800,
 				"height": 600,
 				// "url": `https://d360-viewer.netlify.app/?annoID=${annotationID}`,
