@@ -4,7 +4,7 @@
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
 	import {supabase} from "../components/Supabase-Client";
-	import {miroUploadAnnotation, newUserLabel, addURLMiro, deleteSticky, deleteImage} from "../components/miro-upload";
+	import {miroUploadAnnotation, newUserLabel, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
 	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
@@ -16,7 +16,7 @@
 	$: duration =0;
 	$: vidPaused = true;
 	$: fov = 80;
-	$: viewuserID = -1;
+	$: viewuserID = null;
 	$: prevClosestID = 0;
 	
 	let overlayCanvas = document.getElementById('overlay');
@@ -160,8 +160,13 @@
 	async function loadAnnotationsFromSupabase(){
 		console.log("loading annotations from supabase");
 		// make sure the user id is set
-		if($storedUID == null){
-			await setupUserID();
+		// check if viewuserID is set
+		if(viewuserID == null){
+			
+			if($storedUID == null){
+				await setupUserID();
+			}
+			viewuserID = $storedUID;
 		}
 		// get the annotations from supabase
 		annotations = await getAnnotationsByUser(viewuserID);
@@ -237,18 +242,17 @@
    async function  uploadAnnotation(annotation){
 	annotation.uploaded = false;
 	updateAnnotation(annotation);
+	annotation = await upsertAnnotation(annotation, $storedUID);
 		// check if the image url is null
 	   if (annotation.imgurl == null){
-		   // if it is, upload the image to supabase
-		   annotation.imgurl = await supaUploadImage(annotation.perscanvas, $storedUID);
-		   annotation.equarecimg = await supaUploadImage(annotation.overallcanvas, $storedUID);
-		   updateAnnotation(annotation);
+			// if it is, upload the image to supabase
+			annotation.imgurl = await supaUploadImage(annotation.perscanvas, $storedUID);
+			annotation.equarecimg = await supaUploadImage(annotation.overallcanvas, $storedUID);
+			updateAnnotation(annotation);
 	   }
 		// then upload / update the annotation to miro
 		annotation = await miroUploadAnnotation(annotation, $storedUID);
 		// add the annotation link to miro
-		addURLMiro(annotation, $storedUID)
-		annotation = await upsertAnnotation(annotation, $storedUID);
 		annotation.uploaded = true;
 		updateAnnotation(annotation);
    }
