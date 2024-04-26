@@ -11,7 +11,7 @@
     let uploaded = false
     let cachedText = annotation.text
 
-    $: src = annotation.imgurl
+    $: imgsrc = annotation.imgurl
     function update(updatedTodo) {
       annotation = { ...annotation, ...updatedTodo }    // applies modifications to annotation
       dispatch('update', annotation)              // emit update event
@@ -65,12 +65,13 @@
     $: if (annotation.active){
       scrollIntoView()
     }
-   if (annotation.imgurl !== "" && annotation.imgurl !== null){
-    src = annotation.imgurl
-   }
-   else{
-    src = annotation.perscanvas.toDataURL()
-   }
+    let src = ""
+    try{
+      src = annotation.perscanvas.toDataURL()
+    }
+    catch{
+      console.log("some weird image nonsense, fix this later")
+    }
 
 
   </script>
@@ -96,7 +97,7 @@
         </div>
     </div>
     <!-- if the perscanvas is not null, set the  -->
-    <img src={(annotation.imgurl == null|| annotation.imgurl == "")?  annotation.perscanvas.toDataURL():annotation.imgurl} alt={annotation.text} class="annotationPerspective"/>
+    <img src={imgsrc == null?src:imgsrc} alt={annotation.text} class="annotationPerspective"/>
     <!-- <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/> -->
 
     <!-- markup for displaying annotation: checkbox, label, Edit and Delete Button -->
