@@ -3,13 +3,14 @@
 	import AnnotationList from '../components/Annotation-list.svelte';
     import axios from 'axios';
 	import MiroInfo from '../components/Miro-Info.svelte';
-	// import {supabase} from "../components/Supabase-Client";
 	import {miroUploadAnnotation, newUserLabel, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
 	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID} from "$lib/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
 	import {randomColor} from "../components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
+	import { onMount } from 'svelte';
+
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
 	$: annotations =[];
@@ -138,7 +139,21 @@
 		if(urlParams.has('annoID')){
 			// try and load the annotation from supabase
 			const annoID = urlParams.get('annoID');
+			// create an oembed url
+			const oembedURL = `https://d360-viewer.netlify.app/oembed?annotationID=${annoID}`;
+			// add the oembed url to the header
+			const link = document.createElement('link');
+			link.rel = 'alternate';
+			link.type = 'application/json+oembed';
+			link.href = oembedURL;
+			document.head.appendChild(link);
+	
+
+
 			loadAnnoSupaAndMove(annoID);
+
+
+
 		}
 	}
 
@@ -155,12 +170,15 @@
 
 	}
 
+	onMount(()=>{
+		updateURLparams();
+	})
 
 	function handleLoaded(){
 		// runs when the video is loaded
 		console.log("loaded");
 		updateVideoTime();
-		updateURLparams();
+
 		overlayCanvas = document.getElementById('overlay');
 		setUpCanvas(overlayCanvas, moveCamera);
 		// attached the rotation-reader component to the camera
