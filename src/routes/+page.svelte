@@ -106,15 +106,15 @@
 			}
 		}
 		//  check if roll and yaw are set in the url
-		if (urlParams.has('roll') && urlParams.has('yaw')){
+		if (urlParams.has('pitch') || urlParams.has('yaw')){
 			//  check that roll and yaw are floats
-			if (isNaN(parseFloat(urlParams.get('roll'))) || isNaN(parseFloat(urlParams.get('yaw')))){
+			if (isNaN(parseFloat(urlParams.get('pitch'))) || isNaN(parseFloat(urlParams.get('yaw')))){
 				headPosition.yaw = 0;
 				headPosition.pitch = 0;
 			}
 			else{
 				headPosition.yaw = parseFloat(urlParams.get('yaw'));
-				headPosition.pitch = parseFloat(urlParams.get('roll'));
+				headPosition.pitch = parseFloat(urlParams.get('pitch'));
 			}
 			//  move the camera to the specified position
 			moveCamera(headPosition);
