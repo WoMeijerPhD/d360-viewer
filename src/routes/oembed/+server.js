@@ -18,10 +18,11 @@ export async function GET({url}) {
 		JSON.stringify({
 			
 				"version": "1.0",
-				"type": "link",
+				"type": "photo",
 				"title": annotation.text,
-				// "url": annotation.image_url,
-
+				"url": annotation.image_url,
+				"width": 800,
+				"height": 600,
 				// "url": `https://d360-viewer.netlify.app/?annoID=${annotationID}`,
 				"author_name": annotation.user_id,
 				"provider_name": "d360",
