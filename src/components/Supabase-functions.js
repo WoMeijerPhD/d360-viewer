@@ -111,10 +111,9 @@ export async function getAnnotationPYByID(annotationID){
         return null;
     }
     let item = data[0];
-    // convert the orientation to an object
-    let orientation = {time: item.time, pitch: item.orientation[0], yaw: item.orientation[1]};
+    item.orientation = {pitch: item.orientation[0], yaw: item.orientation[1]};
 
-    return orientation;
+    return item;
 
 }
 

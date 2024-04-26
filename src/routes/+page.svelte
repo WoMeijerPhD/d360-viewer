@@ -143,13 +143,16 @@
 	}
 
 	async function loadAnnoSupaAndMove(annotationID){
-		const newOrientationTime = await getAnnotationPYByID(annotationID);
-		const newOrientation = {pitch: newOrientationTime.pitch, yaw: newOrientationTime.yaw};
-		// move the camera to the new orientation
-		moveCamera(newOrientation);
-		// set the time to the time of the annotation
-		time = newOrientationTime.time;
+		const loadedAnnotation = await getAnnotationPYByID(annotationID);
 		
+		// move the camera to the new orientation
+		moveCamera(loadedAnnotation.orientation);
+		// set the time to the time of the annotation
+		time = loadedAnnotation.time;
+
+		// set the title of the page to the annotation text
+		document.title = loadedAnnotation.text;
+
 	}
 
 
