@@ -97,6 +97,24 @@ export async function getAnnotationsByUser(userID){
         }
     });
     return data;
+}
+
+export async function getAnnotationPYByID(annotationID){
+    const { data, error } = await supabase
+    .from('annotations')
+    .select()
+    .eq('id', annotationID);
+    if(error){
+        console.log("error getting annotation by id: ", error);
+    }
+    if(data.length === 0){
+        return null;
+    }
+    let item = data[0];
+    // convert the orientation to an object
+    let orientation = {time: item.time, pitch: item.orientation[0], yaw: item.orientation[1]};
+
+    return orientation;
 
 }
 

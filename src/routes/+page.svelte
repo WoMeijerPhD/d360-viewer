@@ -6,7 +6,7 @@
 	import {supabase} from "../components/Supabase-Client";
 	import {miroUploadAnnotation, newUserLabel, deleteSticky, deleteImage} from "../components/miro-upload";
 	import { storedUID } from '../components/storable.js'
-	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage} from "../components/Supabase-functions";
+	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID} from "../components/Supabase-functions";
 	import Timeline from '../components/Timeline.svelte';
 	import {randomColor} from "../components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
@@ -96,6 +96,8 @@
 
 	function updateURLparams(){
 		const urlParams = new URLSearchParams(window.location.search);
+		// list all the search parameters
+		console.log(urlParams.toString());
 		if (urlParams.has('time')){
 			//  check that time is a float
 			if (isNaN(parseFloat(urlParams.get('time')))){
@@ -133,6 +135,21 @@
 		if(urlParams.has('uid')){
 			viewuserID = urlParams.get('uid');
 		}
+		if(urlParams.has('annoID')){
+			// try and load the annotation from supabase
+			const annoID = urlParams.get('annoID');
+			loadAnnoSupaAndMove(annoID);
+		}
+	}
+
+	async function loadAnnoSupaAndMove(annotationID){
+		const newOrientationTime = await getAnnotationPYByID(annotationID);
+		const newOrientation = {pitch: newOrientationTime.pitch, yaw: newOrientationTime.yaw};
+		// move the camera to the new orientation
+		moveCamera(newOrientation);
+		// set the time to the time of the annotation
+		time = newOrientationTime.time;
+		
 	}
 
 
