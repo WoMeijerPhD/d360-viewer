@@ -4,7 +4,7 @@ const miroToken = import.meta.env.VITE_MIRO_TOKEN
 
 export const timeMultiplier = 100;
 export const userMultiplier = 600;
-
+export const bottomOffset = 400;
 
 export function calcXY(time, user){
     return [time * timeMultiplier, user * userMultiplier];
@@ -51,12 +51,13 @@ export async function updateTextMiro(text, id) {
         .catch(err => console.error(err));
   }
 
-export async function uploadImageMiro(imgUrl, pos = [0, 0]) {
+export async function uploadImageMiro(imgUrl,imgTitle='test-title', pos = [0, 0]) {
   const url = `https://api.miro.com/v2/boards/${miroBoard}/images`;
 
   const payload = {
     data: {
       url: imgUrl,
+      title: imgTitle
     },
     position: {
       origin: "center",
@@ -80,18 +81,18 @@ export function test(){
 }
 
 export async function miroUploadAnnotation(annotation, userid){
-    const offset = calcXY(annotation.time, userid)
+  console.log("uploading annotation", annotation, userid)
+    const img_offset = calcXY(annotation.time, userid)
+    const text_offset = [img_offset[0], img_offset[1] - bottomOffset]
     // check if the annotation has a miroIDImage and miroIDText
     if(annotation.miroIDImage && annotation.miroIDText){
-        console.log("updating miro");
+      // if it does, update the miro elements
         let resText = await updateTextMiro( annotation.text, annotation.miroIDText);
-        console.log("miro text",resText);
     }
     else{
-        let resImage = await uploadImageMiro(annotation.imgurl, offset);
-        let resText = await uploadTextMiro(annotation.text, offset);
-        console.log("miro image",resImage);
-        console.log("miro text",resText);
+      // if it does not, upload the miro elements
+        let resImage = await uploadImageMiro(annotation.imgurl, annotation.supa_id, img_offset);
+        let resText = await uploadTextMiro(annotation.text, text_offset);
         annotation.miroIDImage = resImage.id??'error';
         annotation.miroIDText = resText.id??'error';
     }
@@ -109,14 +110,6 @@ function createURL(annotation){
     return (`https://d360-viewer.netlify.app/?time=${annotation.time}&yaw=${annotation.orientation.yaw}&pitch=${annotation.orientation.pitch}`);
 }
 
-export async function addURLMiro(annotation, userid){
-    console.log("adding url to miro");
-    let location = calcXY(annotation.time, userid);
-    location[0] += 250;
-    location[1] += 200;
-    let res = await uploadTextMiro(createURL(annotation), location);
-    return res;
-}
 
 export async function deleteSticky(itemID){
     console.log("deleting item", itemID);

@@ -47,7 +47,7 @@ export async function upsertAnnotation(annotation, storedUID){
         console.log("error upserting annotation: ",error);
     }
     else{
-        console.log("annotation upserted");
+        console.log("annotation upserted", data);
     }
     // return the annotation with the id from the database
     return {supa_id: data[0].id, ...annotation};
