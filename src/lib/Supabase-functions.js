@@ -2,7 +2,7 @@
 
 import {supabase} from "$lib/Supabase-Client";
 import { v4 as uuidv4 } from 'uuid';
-import { randomColor } from "../components/helper-functions";
+import { randomColor } from "./components/helper-functions";
 
 export async function addViewer() {
     const { data, error } = await supabase
@@ -27,7 +27,7 @@ export async function upsertAnnotation(annotation, storedUID){
  
         imgurl: annotation.imgurl,
         time: annotation.time,
-        video_name:"test.mp4",
+        video_name:annotation.video??"test.mp4",
         miroIDText: annotation.miroIDText,
         miroIDImage: annotation.miroIDImage,
         user_id: storedUID,
@@ -144,4 +144,18 @@ export async function supaUploadImage(image, storedUID){
     }
 
      return (`https://swhufdbqgtxdxiseggrf.supabase.co/storage/v1/object/public/annotationBucket/${fileName}`);
+}
+
+export async function getVideo(videoID){
+    const { data, error } = await supabase
+    .from('videos')
+    .select()
+    .eq('id', videoID);
+    if(error){
+        console.log("error getting video by id: ", error);
+    }
+    if(data.length === 0){
+        return null;
+    }
+    return data[0];
 }

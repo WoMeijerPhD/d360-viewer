@@ -1,14 +1,13 @@
 <script>
 	import 'aframe';
-	import AnnotationList from '../components/Annotation-list.svelte';
-    import axios from 'axios';
-	import MiroInfo from '../components/Miro-Info.svelte';
-	import {miroUploadAnnotation, newUserLabel, deleteSticky, deleteImage} from "../components/miro-upload";
-	import { storedUID } from '../components/storable.js'
+	import AnnotationList from '$lib/components/Annotation-list.svelte';
+	import MiroInfo from '$lib/components/Miro-Info.svelte';
+	import {miroUploadAnnotation, newUserLabel, deleteSticky, deleteImage} from "$lib/components/miro-upload";
+	import { storedUID } from '$lib/components/storable.js'
 	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID} from "$lib/Supabase-functions";
-	import Timeline from '../components/Timeline.svelte';
-	import {randomColor} from "../components/helper-functions";
-	import {setUpCanvas, drawMinimapDot} from "../components/minimap";
+	import Timeline from '$lib/components/Timeline.svelte';
+	import {randomColor} from "$lib/components/helper-functions";
+	import {setUpCanvas, drawMinimapDot} from "$lib/components/minimap";
 	import { onMount } from 'svelte';
 
 	$: headPosition = {pitch: 0, yaw: 0};
