@@ -1,5 +1,5 @@
 import {getAnnotationPYByID} from '$lib/Supabase-functions.js';
-
+import { redirect } from '@sveltejs/kit';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
@@ -10,14 +10,15 @@ export async function load({ params }) {
         if(annotationID.includes('.')){
             annotationID = annotationID.split('.')[0];
         }
-        // try to load the annotation from the database
-        const annotation = await getAnnotationPYByID(annotationID);
-        // if the annotation is not found, return a 404
-        if(!annotation) return error(404, 'Not found');
-        // return the annotation
-        return {
-                annotation
-        }
+        return redirect(302, `https://d360-viewer.netlify.app/?annoID=${annotationID}`);
+        // // try to load the annotation from the database
+        // const annotation = await getAnnotationPYByID(annotationID);
+        // // if the annotation is not found, return a 404
+        // if(!annotation) return error(404, 'Not found');
+        // // return the annotation
+        // return {
+        //         annotation
+        // }
 
     }
 
