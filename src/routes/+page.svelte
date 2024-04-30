@@ -285,14 +285,15 @@
    async function  uploadAnnotation(annotation){
 	annotation.uploaded = false;
 	updateAnnotation(annotation);
-	annotation = await upsertAnnotation(annotation, $storedUID);
-		// check if the image url is null
-	   if (annotation.imgurl == null){
+	// check if the image url is null
+		if (annotation.imgurl == null){
 			// if it is, upload the image to supabase
 			annotation.imgurl = await supaUploadImage(annotation.perscanvas, $storedUID);
 			annotation.equarecimg = await supaUploadImage(annotation.overallcanvas, $storedUID);
 			updateAnnotation(annotation);
-	   }
+		}
+		annotation = await upsertAnnotation(annotation, $storedUID);
+		updateAnnotation(annotation);
 		// then upload / update the annotation to miro
 		annotation = await miroUploadAnnotation(annotation, $storedUID);
 		// add the annotation link to miro

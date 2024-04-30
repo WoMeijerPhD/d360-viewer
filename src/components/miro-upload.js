@@ -51,13 +51,14 @@ export async function updateTextMiro(text, id) {
         .catch(err => console.error(err));
   }
 
-export async function uploadImageMiro(imgUrl,imgTitle='test-title', pos = [0, 0]) {
+export async function uploadImageMiro(imageID, imageTitle, pos = [0, 0]) {
   const url = `https://api.miro.com/v2/boards/${miroBoard}/images`;
-
+  const imageurl= `https://d360-viewer.netlify.app/image/${imageID}.jpg`
+  console.log("uploading image", imageurl, pos);
   const payload = {
     data: {
-      url: imgUrl,
-      title: imgTitle
+      url: imageurl,
+      title: imageTitle
     },
     position: {
       origin: "center",
@@ -91,7 +92,7 @@ export async function miroUploadAnnotation(annotation, userid){
     }
     else{
       // if it does not, upload the miro elements
-        let resImage = await uploadImageMiro(annotation.imgurl, annotation.supa_id, img_offset);
+        let resImage = await uploadImageMiro( annotation.supa_id, annotation.text, img_offset);
         let resText = await uploadTextMiro(annotation.text, text_offset);
         annotation.miroIDImage = resImage.id??'error';
         annotation.miroIDText = resText.id??'error';
