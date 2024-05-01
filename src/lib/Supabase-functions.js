@@ -27,9 +27,7 @@ export async function upsertAnnotation(annotation, storedUID){
  
         imgurl: annotation.imgurl,
         time: annotation.time,
-        video_name:annotation.video??"test.mp4",
-        miroIDText: annotation.miroIDText,
-        miroIDImage: annotation.miroIDImage,
+        video_name:annotation.video,
         user_id: storedUID,
         fov: annotation.fov,
         color: annotation.color,
@@ -75,11 +73,12 @@ export async function deleteAnnotation(annotation){
     return data[0];
 
 }
-export async function getAnnotationsByUser(userID){
+export async function getAnnotationsByUser(userID,videoID){
     const { data, error } = await supabase
     .from('annotations')
     .select()
     .eq('user_id', userID)
+    .eq('video_name',videoID)
     .eq('deleted', false);
     if(error){
         console.log("error getting annotations by user: ", error);
@@ -89,6 +88,7 @@ export async function getAnnotationsByUser(userID){
     data.forEach(item => {
         item.supa_id = item.id;
         item.uploaded = true;
+        item.video = item.video_name;
         // convert the orientation to an object
         item.orientation = {pitch: item.orientation[0], yaw: item.orientation[1]};
         // if the color is not set, set it to a random color
@@ -120,9 +120,9 @@ export async function getAnnotationPYByID(annotationID){
 
 
 export async function supaUploadImage(image, storedUID){
-    const imageURL = image.toDataURL('image/png');
+
     // Convert image data URL to binary data
-    const imageBlob = await fetch(imageURL).then(response => response.blob());
+    const imageBlob = await fetch(image).then(response => response.blob());
 
     // generate a uuid for the image
 

@@ -1,5 +1,6 @@
-<!-- components/Todo.svelte -->
+
 <script>
+  	import {moveCamera} from "$lib/a-frame-functions.js";
     import { createEventDispatcher } from 'svelte'
     const dispatch = createEventDispatcher()
   
@@ -8,20 +9,14 @@
     let editing = false                     // track editing mode
     let text = annotation.text                    // hold the text of the annotation being edited
     let info = false
-    let uploaded = false
+    $: uploaded = annotation.uploaded ?? false
     let cachedText = annotation.text
 
-    $: imgsrc = annotation.imgurl
     function update(updatedTodo) {
       annotation = { ...annotation, ...updatedTodo }    // applies modifications to annotation
       dispatch('update', annotation)              // emit update event
     }
-  
-    function onCancel() {
-      text = annotation.text                      // restores text to its initial value and
-      editing = false                       // and exit editing mode
-    }
-  
+
     function onSave() {
       // check if the text is the same as the cached text
       if (text != cachedText){
@@ -50,42 +45,31 @@
       info = !info
     }
   
-    function moveCamera(aorientation) {    
-        let camera =  document.querySelector('a-entity[camera]')
-        camera.components["look-controls"].pitchObject.rotation.x = aorientation.pitch,
-        camera.components["look-controls"].yawObject.rotation.y = aorientation.yaw
-    }
-    function scrollIntoView(){
-      // get the annotation element
-      const annotationElement = document.getElementById("annotation-"+annotation.id)
-      // scroll the annotation element into view
-      annotationElement.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"})
-    }
-    // if we're active, scroll into view
-    $: if (annotation.active){
-      scrollIntoView()
-    }
-    let src = ""
+    // function scrollIntoView(){
+    //   // get the annotation element
+    //   const annotationElement = document.getElementById("annotation-"+annotation.id)
+    //   // scroll the annotation element into view
+    //   annotationElement.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"})
+    // }
+    // // if we're active, scroll into view
+    // $: if (annotation.active){
+    //   scrollIntoView()
+    // }
 
-    if (annotation.perscanvas == null){
-      console.log("perscanvas is null")
-    }
-    else{
+    // check if the annotation has a imgurl
+    $: imgsrc = annotation.imgurl ?? annotation.perscanvas
 
-      try{
-        src = annotation.perscanvas.toDataURL()
-      }
-      catch{
-        console.log("some weird image nonsense, fix this later")
-      }
+    function onReturn(){
+      document.querySelector('#bike_ride').currentTime = annotation.time;
+      document.querySelector('#bike_ride').pause();
+      moveCamera(annotation.orientation)
     }
-
 
   </script>
   
 <!-- <div class="annotation"> -->
   <!-- if uploading -->
-  <div class="annotation {annotation.uploaded? 'annotation-uploaded':'annotation-uploading'} {annotation.active?'annotation-active':''}">
+  <div class="annotation {uploaded? 'annotation-uploaded':'annotation-uploading'} {annotation.active?'annotation-active':''}">
 
     <div class="topbar">
         <div class = "color-header-container">
@@ -94,7 +78,7 @@
         </div>
         <div>
           <!-- checkmark character -->
-          {#if annotation.uploaded}
+          {#if uploaded}
             <div class="hint">{'\u2713'}</div>
           {:else}
               <div class="spinner">{'\u27F3'}</div>
@@ -103,35 +87,24 @@
           <button on:click={onRemove}>X</button>
         </div>
     </div>
-    <!-- if the perscanvas is not null, set the  -->
+
     <img src={imgsrc == null?src:imgsrc} alt={annotation.text} class="annotationPerspective"/>
-    <!-- <img src={annotation.overallcanvas.toDataURL()} alt={annotation.text} class="annotationOverall"/> -->
-
-    <!-- markup for displaying annotation: checkbox, label, Edit and Delete Button -->
-
-        <!-- add an input form that lets the user edit the text -->
-        <!-- if the annotation text is null -->
-        <!-- add a textbox that is the annotation text and updates when editing is done -->
         <input bind:value={text} type="text" id="annotation-{annotation.id}" autoComplete="off" class="annotation-text" placeholder="annotation label" on:focusout={onSave} />
 
 
         <!-- add a button that moves the aframe camera to the orientation -->
-        <button on:click={()=>{document.querySelector('#bike_ride').currentTime = annotation.time;moveCamera(annotation.orientation)}}>return to moment</button>
+        <button on:click={onReturn}>return to moment</button>
         <!-- add a button that deletes the annotation -->
 
         {#if info}
         <hr/>
         <div class="annotation-info">
-
-          <!-- <button type="button" class="btn" on:click={upLoad}>
-            force upload
-        </button> -->
       <p>id: {annotation.id}</p>
       <p>supa_id: {annotation.supa_id??"not set"}</p>
       <p>time: {annotation.time}</p>
       <p>text: {annotation.text}</p>
       <p>head pos: {annotation.orientation.yaw.toFixed(2)},{annotation.orientation.pitch.toFixed(2)}</p>
-      <p>uploaded: {annotation.uploaded}</p>
+      <p>uploaded: {uploaded}</p>
       <p>image URL:
       <!-- if the imgurl is null -->
       {#if annotation.imgurl == ""}

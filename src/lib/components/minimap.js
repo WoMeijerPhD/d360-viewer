@@ -1,3 +1,4 @@
+import {moveCamera} from "$lib/a-frame-functions.js";
 export function pitchYawToPercentage(pitch, yaw){
     // convert the pitch and yaw (in radians) to a percentage of the total rotation
     let pitchPercentage =1- ((pitch + Math.PI/2) / Math.PI)%1;
@@ -12,11 +13,18 @@ export function percentageToPitchYaw(pitchPercentage, yawPercentage){
     return {pitch: pitch, yaw: yaw};
 }
 
-export function drawMinimapDot(pitch, yaw, canvas){
-
+export function drawMinimapDot(pitch, yaw){	
+	let canvas = document.getElementById('overlay');
     let pers = pitchYawToPercentage(pitch,yaw);
     let widthPer = pers.yaw;
     let heightPer = pers.pitch;
+	let xpos = canvas.width * widthPer;
+	let ypos = canvas.height * heightPer;
+	drawOnly(xpos,ypos, canvas);
+   }
+
+function drawOnly(x,y, canvas){
+
 	let ctx = canvas.getContext('2d');
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -24,16 +32,23 @@ export function drawMinimapDot(pitch, yaw, canvas){
 	ctx.lineWidth = 8;
 	ctx.strokeStyle = 'white';
 	ctx.beginPath();
-	ctx.arc(canvas.width * widthPer, canvas.height * heightPer, 5, 0, 2 * Math.PI);
+	ctx.arc(x,y, 5, 0, 2 * Math.PI);
 	ctx.stroke();
 	ctx.lineWidth = 4;
 	ctx.strokeStyle = 'black';
 	ctx.beginPath();
-	ctx.arc(canvas.width * widthPer, canvas.height * heightPer, 5, 0, 2 * Math.PI);
+	ctx.arc(x,y, 5, 0, 2 * Math.PI);
 	ctx.stroke();
-   }
+}
 
-export function setUpCanvas(canvas, moveCamera){
+function clearCanvas(canvas){
+	let ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+}
+
+export function setUpCanvas(){
+	let canvas = document.getElementById('overlay');
 	 // Add event listener to the canvas
 	 canvas.addEventListener('click', function(event) {
 		var rect = canvas.getBoundingClientRect();
@@ -47,5 +62,9 @@ export function setUpCanvas(canvas, moveCamera){
 		const calcPos = percentageToPitchYaw(heightPer, widthPer);
 		// move the camera to the calculated position
 		moveCamera(calcPos);
+		// console.log(drawOnly)
+		// // draw the dot on the canvas
+		clearCanvas(canvas);
+
 	});
    }
