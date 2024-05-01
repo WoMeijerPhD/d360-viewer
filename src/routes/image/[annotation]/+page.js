@@ -10,7 +10,14 @@ export async function load({ params }) {
         if(annotationID.includes('.')){
             annotationID = annotationID.split('.')[0];
         }
-        return redirect(302, `https://d360-viewer.netlify.app/?annoID=${annotationID}`);
+        // try and load the annotation from the database
+        let annotation = await getAnnotationPYByID(annotationID);
+        // if the annotation is not found, return a 404
+        if(!annotation) return error(404, 'Not found');
+        // get the video name
+        let videoName = annotation.video_name;
+
+        return redirect(302, `https://d360-viewer.netlify.app/viewer/${videoName}/${annotationID}`);
         // // try to load the annotation from the database
         // const annotation = await getAnnotationPYByID(annotationID);
         // // if the annotation is not found, return a 404
