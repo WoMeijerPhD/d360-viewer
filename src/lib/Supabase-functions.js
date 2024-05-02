@@ -24,7 +24,6 @@ export async function upsertAnnotation(annotation, storedUID){
             annotation.orientation.pitch,
              annotation.orientation.yaw
         ],
- 
         imgurl: annotation.imgurl,
         time: annotation.time,
         video_name:annotation.video,
@@ -57,8 +56,6 @@ export async function deleteAnnotation(annotation){
         console.log("annotation does not have a supa_id");
         return;
     }
-
-
     const { data, error } = await supabase
     .from('annotations')
     .update({ deleted: true,
@@ -83,20 +80,23 @@ export async function getAnnotationsByUser(userID,videoID){
     if(error){
         console.log("error getting annotations by user: ", error);
     }
+    // for each item, convert the annotation
+    data.forEach(item => convertAnnotation(item));
 
-    // for each item in data, set the supa_id to the id, and set uploaded to true
-    data.forEach(item => {
-        item.supa_id = item.id;
-        item.uploaded = true;
-        item.video = item.video_name;
-        // convert the orientation to an object
-        item.orientation = {pitch: item.orientation[0], yaw: item.orientation[1]};
-        // if the color is not set, set it to a random color
-        if(!item.color){
-            item.color = randomColor();
-        }
-    });
     return data;
+}
+
+function convertAnnotation(item){
+    item.supa_id = item.id;
+    item.uploaded = true;
+    item.video = item.video_name;
+    // convert the orientation to an object
+    item.orientation = {pitch: item.orientation[0], yaw: item.orientation[1]};
+    // if the color is not set, set it to a random color
+    if(!item.color){
+        item.color = randomColor();
+    }
+    return item;
 }
 
 export async function getAnnotationPYByID(annotationID){
@@ -111,10 +111,8 @@ export async function getAnnotationPYByID(annotationID){
         return null;
     }
     let item = data[0];
-    item.orientation = {pitch: item.orientation[0], yaw: item.orientation[1]};
-
+    item = convertAnnotation(item);
     return item;
-
 }
 
 
@@ -158,4 +156,14 @@ export async function getVideo(videoID){
         return null;
     }
     return data[0];
+}
+
+export async function getVideos(){
+    const { data, error } = await supabase
+    .from('videos')
+    .select();
+    if(error){
+        console.log("error getting videos: ", error);
+    }
+    return data;
 }
