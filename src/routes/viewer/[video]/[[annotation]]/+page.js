@@ -1,4 +1,4 @@
-
+export const ssr = false;
 import {getVideo} from '$lib/Supabase-functions';
 
 /** @type {import('./$types').PageServerLoad} */
