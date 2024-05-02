@@ -9,13 +9,9 @@
 	import { onMount } from 'svelte';
 	import {moveCamera} from "$lib/a-frame-functions.js";
 	import { v4 as uuidv4 } from 'uuid';
-
-
-
-
 	
 	export let data;
-	console.log(data);
+	console.log(data)
 	$: headPosition = {pitch: 0, yaw: 0};
 	$: time =  0;
 	$: annotations =[];
@@ -23,7 +19,9 @@
 	$: vidPaused = true;
 	$: fov = 80;
 	$: viewuserID = null;
-	$: prevClosestID = 0;
+
+	// set the page title to the video title
+	document.title = data.props.video.title;
 
 	// --- code to initialize when the video is loaded
 	function videoLoaded(){
@@ -51,12 +49,6 @@
 			drawMinimapDot(headPosition.pitch, headPosition.yaw);
 		}
 	});
-
-	// check if there is an annotation
-	if(data.props.annotation){
-		// log the annotation for now
-		console.log(data.props.annotation);
-	}
 
 	// --- code for creating annotations
 	function makeAnnotation(forTest = false){
@@ -131,8 +123,7 @@
 		console.log("loading annotations from supabase");
 		// make sure the user id is set
 		// check if viewuserID is set
-		if(viewuserID == null){
-			
+		if(viewuserID == null){	
 			if($storedUID == null){
 				await setupUserID();
 			}
@@ -142,6 +133,13 @@
 		annotations = await getAnnotationsByUser(viewuserID, data.props.video.id);
 		sortAnnotations();
 	}
+
+	// if there is an annotation, load it
+	if(data.props.annotationID){
+		console.log("annotation", data.props.annotation)
+	}
+
+
 </script>
 
 
