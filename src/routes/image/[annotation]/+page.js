@@ -18,15 +18,6 @@ export async function load({ params }) {
         let videoName = annotation.video_name;
 
         return redirect(302, `https://d360-viewer.netlify.app/viewer/${videoName}/${annotationID}`);
-        // // try to load the annotation from the database
-        // const annotation = await getAnnotationPYByID(annotationID);
-        // // if the annotation is not found, return a 404
-        // if(!annotation) return error(404, 'Not found');
-        // // return the annotation
-        // return {
-        //         annotation
-        // }
-
     }
 
 

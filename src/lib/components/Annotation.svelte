@@ -5,7 +5,7 @@
     const dispatch = createEventDispatcher()
   
     export let annotation
-    console.log("created new annotation", annotation)
+    // console.log("created new annotation", annotation)
     let editing = false                     // track editing mode
     let text = annotation.text                    // hold the text of the annotation being edited
     let info = false
