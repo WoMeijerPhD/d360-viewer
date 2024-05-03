@@ -57,8 +57,8 @@
 		vidPaused = true;
 		// set the screenshot id to a uuid
 		const screenshotID = uuidv4();
-		const perscanvas = document.querySelector('a-scene').components.screenshot.getCanvas('perspective').toDataURL('image/png')
 		const overallcanvas = document.querySelector('a-scene').components.screenshot.getCanvas('equarectangular').toDataURL('image/png')
+		const perscanvas = document.querySelector('a-scene').components.screenshot.getCanvas('perspective').toDataURL('image/png')
 
 		// add the annotation to the list of annotations
 		annotations = [ {text:"",time: time,orientation: {...headPosition}, video: data.props.video.id, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID, yOffset:0, color: randomColor(), active: false,fov: fov, uploaded:false}, ...annotations];
