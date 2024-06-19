@@ -120,6 +120,7 @@
       <p>yOffset:{annotation.yOffset}</p>
       <p>color: {annotation.color}</p>
       <p>active: {annotation.active}</p>
+      <p>session: {annotation.session ?? 'session not set'}</p>
     </div>
   {/if}
 

@@ -11,7 +11,6 @@ export async function load({ params }) {
         if(annotationID.includes('.')){
             annotationID = annotationID.split('.')[0];
         }
-        
     }
     if(params.video){
         let videoID = params.video;
@@ -26,7 +25,7 @@ export async function load({ params }) {
     return {
         props: {
             video,
-            annotationID,
+            annotationID
         }
     };
 }

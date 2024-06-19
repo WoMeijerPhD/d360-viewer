@@ -31,6 +31,7 @@ export async function upsertAnnotation(annotation, storedUID){
         fov: annotation.fov,
         color: annotation.color,
         equarecimg: annotation.equarecimg,
+        session: annotation.session,
     }
     // if the annotation has a supa_id, use that to update the database
     if(annotation.supa_id){
@@ -166,4 +167,15 @@ export async function getVideos(){
         console.log("error getting videos: ", error);
     }
     return data;
+}
+
+export async function createNewSession(userID, videoID){
+    const { data, error } = await supabase
+    .from('sessions')
+    .insert([{ user: userID, video: videoID }])
+    .select();
+    if(error){
+        console.log("error creating new session: ", error);
+    }
+    return data[0].id;
 }

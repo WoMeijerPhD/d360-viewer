@@ -1,6 +1,14 @@
 <script>
+	import {addViewer} from '../lib/Supabase-functions.js';
+	import {getUserId,newUserId} from '../lib/user-id.js';
 	export let data;
-	console.log(data)
+	import { onMount } from 'svelte'
+
+	let user_id = "no user ID set"
+	onMount(async () => {
+		user_id = await getUserId();
+	})
+
 </script>
 <div id ='wrapper'>
 
@@ -21,6 +29,12 @@
 			</div>
 		</a>
 		{/each}
+	</div>
+
+	<div id="user_managment">
+		<h2>User Managment</h2>
+		Hello user! You are user number: {user_id}
+		<button on:click={newUserId}>get new user ID</button>
 	</div>
 	
 </div>

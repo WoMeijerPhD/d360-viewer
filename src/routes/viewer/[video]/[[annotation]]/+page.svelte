@@ -2,14 +2,15 @@
 	import 'aframe';
 	import AnnotationList from '$lib/components/Annotation-list.svelte';
 	import { storedUID } from '$lib/components/storable.js'
-	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID} from "$lib/Supabase-functions";
+	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID, createNewSession} from "$lib/Supabase-functions";
 	import Timeline from '$lib/components/Timeline.svelte';
 	import {randomColor} from "$lib/components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "$lib/components/minimap";
 	import { onMount } from 'svelte';
-	import {moveCamera} from "$lib/a-frame-functions.js";
 	import { v4 as uuidv4 } from 'uuid';
-	
+	import Modal from '$lib/components/Modal.svelte';
+	import {getUserId,newUserId} from '$lib/user-id.js';
+
 	export let data;
 	console.log(data)
 	$: headPosition = {pitch: 0, yaw: 0};
@@ -19,6 +20,9 @@
 	$: vidPaused = true;
 	$: fov = 80;
 	$: viewuserID = null;
+	$: sessionID = null;
+
+	let showModal = false;
 
 	// set the page title to the video title
 	document.title = data.props.video.title;
@@ -61,7 +65,7 @@
 		const perscanvas = document.querySelector('a-scene').components.screenshot.getCanvas('perspective').toDataURL('image/png')
 
 		// add the annotation to the list of annotations
-		annotations = [ {text:"",time: time,orientation: {...headPosition}, video: data.props.video.id, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID, yOffset:0, color: randomColor(), active: false,fov: fov, uploaded:false}, ...annotations];
+		annotations = [ {text:"",time: time,orientation: {...headPosition}, video: data.props.video.id, perscanvas: perscanvas, overallcanvas:overallcanvas, id: screenshotID, yOffset:0, color: randomColor(), active: false,fov: fov, uploaded:false, session: sessionID}, ...annotations];
 		console.log("uploading annotation", annotations[0].id);
 		if(!forTest){
 			// if we're testing locally, no need to add to miro or supabase yet...
@@ -106,29 +110,10 @@
 	  deleteAnnotation(annotation);
     }
 
-	// crappy old code to clean up
-	async function setupUserID(){
-		if ($storedUID == null){
-			// get a new userID from supabase
-			$storedUID = await addViewer();
-			let res = await newUserLabel($storedUID, `user number ${$storedUID}`);
-		}
-		if(viewuserID == -1){
-			viewuserID = newID;
-		}
-   }
-
-
    async function loadAnnotationsFromSupabase(){
 		console.log("loading annotations from supabase");
 		// make sure the user id is set
-		// check if viewuserID is set
-		if(viewuserID == null){	
-			if($storedUID == null){
-				await setupUserID();
-			}
-			viewuserID = $storedUID;
-		}
+		viewuserID = await getUserId();
 		// get the annotations from supabase
 		annotations = await getAnnotationsByUser(viewuserID, data.props.video.id);
 		sortAnnotations();
@@ -139,11 +124,46 @@
 		console.log("annotation", data.props.annotation)
 	}
 
+	async function loadSession(){
+		// if the data had an annotation don't create a new session
+		if(data.props.annotationID){
+			return;
+		}
+		// if the data had a session id, load the session
+		if(data.props.sessionID){
+			sessionID = data.props.sessionID;
+			// TODO: load all the annotations from this session
+			return;
+		}
+
+		// if there is no session id, create a new session
+		// double check that the user id is set
+		if(!viewuserID){
+			viewuserID = await getUserId();
+		}
+		sessionID = await createNewSession(viewuserID,data.props.video.id);
+		
+	}
+
+	onMount(async ()=>{
+		// load the session
+		await loadSession();
+		// if there is an annotation, load it
+		// if(data.props.annotationID){
+		// 	annotations = [await getAnnotationPYByID(data.props.annotationID)];
+		// 	sortAnnotations();
+		// }
+	})
+
+
+
 
 </script>
 
 
 <div id="metacontainer">
+	<!-- this is a modal for showing an issues -->
+	<Modal showModal={showModal}/>
     <div id="container">
         <div class="aframe">
             <a-scene  embedded screenshot="width: 1024; height: 512;" look-controls rotation-reader>
@@ -178,10 +198,13 @@
 			on:loadeddata={videoLoaded}> </video>
 			<canvas id="overlay"></canvas>
 			pitch: {headPosition.pitch.toFixed(2)}, yaw:{headPosition.yaw.toFixed(2)}, <span title="use q/e to change FOV, w to reset">fov: {fov}</span>
+			<br>
+			user: {viewuserID} - session: {sessionID}
+			<br>
 		</div>
 		
+		
 		<div class="annotations">
-			
 			<AnnotationList annotations={annotations} 
 				on:remove={(e) => removeAnnotation(e.detail)} 
 				on:update={(e)=> updateAnnotationText(e.detail)} 
