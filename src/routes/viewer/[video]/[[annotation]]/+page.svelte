@@ -2,7 +2,7 @@
 	import 'aframe';
 	import AnnotationList from '$lib/components/Annotation-list.svelte';
 	import { storedUID } from '$lib/components/storable.js'
-	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID, createNewSession} from "$lib/Supabase-functions";
+	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID, createNewSession,updateSessionAnnotations} from "$lib/Supabase-functions";
 	import Timeline from '$lib/components/Timeline.svelte';
 	import {randomColor} from "$lib/components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "$lib/components/minimap";
@@ -10,6 +10,7 @@
 	import { v4 as uuidv4 } from 'uuid';
 	import Modal from '$lib/components/Modal.svelte';
 	import {getUserId,newUserId} from '$lib/user-id.js';
+    import { all } from 'axios';
 
 	export let data;
 	console.log(data)
@@ -22,7 +23,11 @@
 	$: viewuserID = null;
 	$: sessionID = null;
 
+	let allAnnotations = [];
+	let filtered = false;
+	let filterButtonText = "all sessions";
 	let showModal = false;
+
 
 	// set the page title to the video title
 	document.title = data.props.video.title;
@@ -83,6 +88,7 @@
 		calcYOffset();
 	}
 	function calcYOffset(){
+		// move this into the timeline class
 		annotations.forEach((a, i) => a.yOffset = i*12);
 	}
 	async function uploadAnnotation(annotation){
@@ -98,6 +104,9 @@
 		annotation = await upsertAnnotation(annotation, $storedUID);
 		annotation.uploaded = true;
 		updateAnnotation(annotation);
+
+		// TODO: move this code to move this list somewhere more logical
+		updateSessionAnnotations(sessionID, annotations);
 	}
 
 	function updateAnnotationText(annotation){
@@ -117,6 +126,9 @@
 		// get the annotations from supabase
 		annotations = await getAnnotationsByUser(viewuserID, data.props.video.id);
 		sortAnnotations();
+		allAnnotations = annotations;
+		// run filter once to show only the annotations in this session
+		filter();
 	}
 
 	// if there is an annotation, load it
@@ -133,6 +145,14 @@
 		if(data.props.sessionID){
 			sessionID = data.props.sessionID;
 			// TODO: load all the annotations from this session
+			return;
+		}
+		// get the session id from the user parameters
+		const urlParams = new URLSearchParams(window.location.search);
+		const session_id = urlParams.get('session_id');
+		if(session_id){
+			console.log(session_id)
+			sessionID = session_id;
 			return;
 		}
 
@@ -153,7 +173,24 @@
 		// 	annotations = [await getAnnotationPYByID(data.props.annotationID)];
 		// 	sortAnnotations();
 		// }
+
 	})
+
+	function filter(){
+		if(filtered){
+			annotations = allAnnotations;
+			calcYOffset();
+			filterButtonText = "all sessions";
+		}else{
+			console.log(sessionID)
+			// only show the annotations that are have the same session id
+			annotations = allAnnotations.filter(a => a.session == sessionID);
+			calcYOffset();
+			filterButtonText = "this session";
+		}
+		filtered = !filtered;
+	
+	}
 
 
 
@@ -205,6 +242,10 @@
 		
 		
 		<div class="annotations">
+			<div class="annotations-header">
+				<h3>Annotations:</h3>
+				<button class = "control-button" on:click={filter}>{filterButtonText}</button>
+			</div>
 			<AnnotationList annotations={annotations} 
 				on:remove={(e) => removeAnnotation(e.detail)} 
 				on:update={(e)=> updateAnnotationText(e.detail)} 
@@ -300,5 +341,11 @@
 		height: auto;
 		/* set the transparency to 50% */
 		opacity: 0.5;
+	}
+	
+	.annotations-header{
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
 	}
 </style>

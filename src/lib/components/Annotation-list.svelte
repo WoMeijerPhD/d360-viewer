@@ -34,8 +34,6 @@
   
   <!-- Annotations.svelte -->
   <div class="annotation-list">
-  <h3>Annotations:</h3>
-  
     <!-- Annotations -->
     <ul class="annotations" aria-labelledby="list-heading">
     {#each annotations as annotation (annotation.id)}

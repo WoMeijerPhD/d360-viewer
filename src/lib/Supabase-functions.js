@@ -179,3 +179,35 @@ export async function createNewSession(userID, videoID){
     }
     return data[0].id;
 }
+
+export async function updateSessionAnnotations(sessionID, annotations){
+    const relevantAnnotations = annotations.filter(annotation => annotation.session === sessionID);
+    const annotationIDs = relevantAnnotations.map(annotation => annotation.supa_id);
+
+    const { data, error } = await supabase
+    .from('sessions')
+    .update({annotations: [...annotationIDs]})
+    .eq('id', sessionID)
+    .select();
+    if(error){
+        console.log("error updating session annotations: ", error);
+    }
+    return data[0];
+}
+
+
+export async function getSessionsByUser(userID){
+    const { data, error } = await supabase
+    .from('sessions')
+    .select(`
+        id,
+        created_at,
+        videos (id, title, url),
+        annotations (id)
+        `)
+    .eq('user', userID);
+    if(error){
+        console.log("error getting sessions by user: ", error);
+    }
+    return data;
+}
