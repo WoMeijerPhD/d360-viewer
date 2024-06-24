@@ -17,6 +17,11 @@
 	})
 
 
+	async function getNewUserId(){
+		user_id = await newUserId();
+	}
+
+
 </script>
 <div id ='wrapper'>
 
@@ -42,6 +47,8 @@
 	<div id="user_managment">
 		<h2>User Managment</h2>
 		Hello user! You are user number: {user_id}
+
+		<button on:click={newUserId} > get new user number</button>
 
 		<h3>Sessions</h3>
 		<table>

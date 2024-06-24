@@ -29,3 +29,10 @@ export function deltaFOV(delta) {
     camera.setAttribute('camera', 'fov', tempfov);
     return tempfov;
 }
+
+export function returnToMoment(annotation) {
+    document.querySelector('#bike_ride').currentTime = annotation.time;
+    document.querySelector('#bike_ride').pause();
+    moveCamera(annotation.orientation)
+    setFOV(annotation.fov)
+}

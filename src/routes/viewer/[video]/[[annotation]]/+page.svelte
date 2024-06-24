@@ -2,7 +2,7 @@
 	import 'aframe';
 	import AnnotationList from '$lib/components/Annotation-list.svelte';
 	import { storedUID } from '$lib/components/storable.js'
-	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID, createNewSession,updateSessionAnnotations} from "$lib/Supabase-functions";
+	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID, createNewSession,updateSessionAnnotations, getAnnotationsBySessionID} from "$lib/Supabase-functions";
 	import Timeline from '$lib/components/Timeline.svelte';
 	import {randomColor, takeScreenshot} from "$lib/components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "$lib/components/minimap";
@@ -10,7 +10,7 @@
 	import { v4 as uuidv4 } from 'uuid';
 	import Modal from '$lib/components/Modal.svelte';
 	import {getUserId,newUserId} from '$lib/user-id.js';
-    import { all } from 'axios';
+	import {returnToMoment} from '$lib/a-frame-functions.js';
 
 	export let data;
 	console.log(data)
@@ -37,7 +37,7 @@
 		console.log("video is loaded");
 		duration = document.querySelector("#bike_ride").duration;
 		setUpCanvas();
-		loadAnnotationsFromSupabase();
+	
 	}
 	// --- a-frame initialization code
 
@@ -139,10 +139,6 @@
 	}
 
 	async function loadSession(){
-		// if the data had an annotation don't create a new session
-		if(data.props.annotationID){
-			return;
-		}
 		// if the data had a session id, load the session
 		if(data.props.sessionID){
 			sessionID = data.props.sessionID;
@@ -155,22 +151,29 @@
 		if(session_id){
 			console.log(session_id)
 			sessionID = session_id;
+			allAnnotations = await getAnnotationsBySessionID(session_id);
+			annotations = allAnnotations;
+			sortAnnotations();
 			return;
 		}
 
 		// if there is no session id, create a new session
 		// double check that the user id is set
-		if(!viewuserID){
-			viewuserID = await getUserId();
-		}
+
 		sessionID = await createNewSession(viewuserID,data.props.video.id);
 		
+		// load the annotations from supabase
+		await loadAnnotationsFromSupabase();
 	}
 
 	onMount(async ()=>{
 		// set the video to the video element
 		video = document.getElementById("bike_ride");
 
+		// set the user id
+		if(!viewuserID){
+			viewuserID = await getUserId();
+		}
 		// load the session
 		await loadSession();
 		// if there is an annotation, load it
@@ -178,6 +181,13 @@
 		// 	annotations = [await getAnnotationPYByID(data.props.annotationID)];
 		// 	sortAnnotations();
 		// }
+
+		// if there is an annotation, navigate to that moment
+		if(data.props.annotationID){
+			const annotation = await getAnnotationPYByID(data.props.annotationID);
+			console.log('moving camera to:', annotation);
+			returnToMoment(annotation);
+		}
 
 	})
 

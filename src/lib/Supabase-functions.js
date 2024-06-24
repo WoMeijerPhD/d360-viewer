@@ -211,3 +211,16 @@ export async function getSessionsByUser(userID){
     }
     return data;
 }
+
+export async function getAnnotationsBySessionID(sessionID){
+    const { data, error } = await supabase
+    .from('annotations')
+    .select()
+    .eq('session', sessionID);
+    if(error){
+        console.log("d360","error getting annotations by session id: ", error);
+    }
+    // convert the annotations
+    const convertedData = data.map(item => convertAnnotation(item));
+    return convertedData;
+}
