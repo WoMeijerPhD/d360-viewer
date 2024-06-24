@@ -17,7 +17,7 @@ export async function load({ params }) {
         // get the video name
         let videoName = annotation.video_name;
 
-        return redirect(302, `https://d360-viewer.netlify.app/viewer/${videoName}/${annotationID}`);
+        return redirect(302, `https://d360-viewer.netlify.app/viewer/${videoName}/${annotationID}?session_id=${annotation.session}`);
     }
 
 

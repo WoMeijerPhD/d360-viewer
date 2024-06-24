@@ -121,6 +121,11 @@
       <p>color: {annotation.color}</p>
       <p>active: {annotation.active}</p>
       <p>session: {annotation.session ?? 'session not set'}</p>
+      {#if annotation.overallcanvas}
+      <p>overall canvas:</p>
+        <img src={annotation.overallcanvas} alt="perspective canvas" class="annotationOverall"/>
+        
+      {/if}
     </div>
   {/if}
 

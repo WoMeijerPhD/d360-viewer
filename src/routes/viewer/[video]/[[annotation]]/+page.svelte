@@ -4,7 +4,7 @@
 	import { storedUID } from '$lib/components/storable.js'
 	import {addViewer, upsertAnnotation, deleteAnnotation,getAnnotationsByUser,supaUploadImage,getAnnotationPYByID, createNewSession,updateSessionAnnotations} from "$lib/Supabase-functions";
 	import Timeline from '$lib/components/Timeline.svelte';
-	import {randomColor} from "$lib/components/helper-functions";
+	import {randomColor, takeScreenshot} from "$lib/components/helper-functions";
 	import {setUpCanvas, drawMinimapDot} from "$lib/components/minimap";
 	import { onMount } from 'svelte';
 	import { v4 as uuidv4 } from 'uuid';
@@ -27,7 +27,7 @@
 	let filtered = false;
 	let filterButtonText = "all sessions";
 	let showModal = false;
-
+	let video;
 
 	// set the page title to the video title
 	document.title = data.props.video.title;
@@ -66,7 +66,9 @@
 		vidPaused = true;
 		// set the screenshot id to a uuid
 		const screenshotID = uuidv4();
-		const overallcanvas = document.querySelector('a-scene').components.screenshot.getCanvas('equarectangular').toDataURL('image/png')
+		// const overallcanvas = document.querySelector('a-scene').components.screenshot.getCanvas('equarectangular').toDataURL('image/png')
+		// the overall canvas shoulw be the bike_ride video
+		const overallcanvas = takeScreenshot(video);
 		const perscanvas = document.querySelector('a-scene').components.screenshot.getCanvas('perspective').toDataURL('image/png')
 
 		// add the annotation to the list of annotations
@@ -166,6 +168,9 @@
 	}
 
 	onMount(async ()=>{
+		// set the video to the video element
+		video = document.getElementById("bike_ride");
+
 		// load the session
 		await loadSession();
 		// if there is an annotation, load it

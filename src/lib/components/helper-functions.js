@@ -52,3 +52,18 @@ export const htmlColor2miro = (htmlColor) => {
 // export const randomColor = () => {
 //     return "#" + Math.floor(Math.random() * 16777215).toString(16);
 // }
+
+export function takeScreenshot(videoElement) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+  
+    canvas.width = videoElement.videoWidth;
+    canvas.height = videoElement.videoHeight;
+  
+    context.drawImage(videoElement, 0, 0);
+  
+    const dataURL = canvas.toDataURL('image/png'); // Change format if needed (e.g. 'image/png')
+  
+    return dataURL;
+  }
+  
