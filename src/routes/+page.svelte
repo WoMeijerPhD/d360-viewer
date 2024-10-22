@@ -31,7 +31,8 @@
 	</p>
 	<p>What is working is the viewer, you can click on one of these videos below and it should show you the video and enable you to make annotations using the '+' button.</p>
 	<p>These annotations get saved somewhere to a server, still need to make the user management and flow and all that work. But yeah, it will save your data. Sorry.</p>
-	
+	<h2>Not a great demo yet....</h2>
+	<p>It's difficult to demo this tool on its own! View the walkthrough video here: <a href="https://youtu.be/0MAe6HZn3hw">https://youtu.be/0MAe6HZn3hw</a></p>
 	
 	<div id="video-wrapper">
 		<!-- iterate over data.videos -->
